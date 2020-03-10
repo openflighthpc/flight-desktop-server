@@ -38,6 +38,7 @@ gem 'hashie'
 gem 'puma'
 gem 'rake'
 gem 'sinatra'
+gem 'sinatra-namespace'
 
 group :development, :test do
   group :pry do

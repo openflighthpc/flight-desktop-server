@@ -60,6 +60,17 @@ class HttpError < StandardError
   end
 end
 
+class NotFound < HttpError
+  self.default_http_status = 404
+
+  def initialize(*a, type: nil, id: nil, details: nil, **opts)
+    if type && id
+      details ||= "Could not find '#{type}': #{id}"
+    end
+    super(*a, details: details, **opts)
+  end
+end
+
 class UserNotFound < HttpError
   self.default_http_status = 404
 end
