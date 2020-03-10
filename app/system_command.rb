@@ -28,6 +28,13 @@
 #===============================================================================
 
 class SystemCommand < Hashie::Dash
+  # TODO: Sanitize ID
+  def self.find_session(id, user:)
+    as_user("flight desktop show #{id}", user: user)
+  end
+
+  private_class_method
+
   def self.as_user(_command, user:)
     # noop - eventually return instance of SystemCommand
   end

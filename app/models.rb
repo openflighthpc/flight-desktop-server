@@ -36,7 +36,7 @@ class Session < Hashie::Trash
   #
   # Revists as necessary, we may want to disable this
   def self.find_by_fuzzy_id(fuzzy_id, user:)
-    cmd = SystemCommand.as_user('echo IMPLMENT Session.find_by_name; exit 1', user: user)
+    cmd = SystemCommand.find_session(fuzzy_id, user: user)
     return nil unless cmd.code == 0
     data = cmd.stdout.split("\n").each_with_object({}) do |line, memo|
       parts = line.split(/\s+/)

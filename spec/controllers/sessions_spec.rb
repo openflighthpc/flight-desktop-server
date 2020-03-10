@@ -41,7 +41,7 @@ RSpec.describe '/sessions' do
       let(:url_id) { 'missing' }
 
       before do
-        allow(SystemCommand).to receive(:as_user).and_return(SystemCommand.new(code: 1))
+        allow(SystemCommand).to receive(:find_session).and_return(SystemCommand.new(code: 1))
         make_request
       end
 
@@ -79,7 +79,7 @@ RSpec.describe '/sessions' do
             Password        #{subject.password}
           STDOUT
         )
-        allow(SystemCommand).to receive(:as_user).and_return(stubbed)
+        allow(SystemCommand).to receive(:find_session).and_return(stubbed)
         make_request
       end
 
