@@ -51,6 +51,7 @@ RSpec.describe 'Error Handling' do
     error = parse_last_response_body['errors'].first
     expect(error['code']).to eq('Internal Server Error')
     expect(error['status']).to eq(last_response.status.to_s)
+    expect(error.keys).not_to include('details')
   end
 
   it 'handles internal server errors' do

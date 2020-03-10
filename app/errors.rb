@@ -40,9 +40,12 @@ class HttpError < StandardError
     @default_http_status ||= 500
   end
 
-  def initialize(message=nil, http_status: nil)
+  attr_reader :details
+
+  def initialize(message = nil, details: nil, http_status: nil)
     @http_status = http_status
-    super(message)
+    @details = details
+      super([message, details].join("\n"))
   end
 
   def http_status
@@ -53,12 +56,13 @@ class HttpError < StandardError
     {
       status: self.http_status.to_s,
       code: self.class.code,
-    }.tap { |h| h[:details] = message if message }
+    }.tap { |h| h[:details] = details if details }
   end
 end
 
+class UserNotFound < HttpError
+end
+
 class InternalServerError < HttpError
-  def initialize(message = nil)
-  end
 end
 
