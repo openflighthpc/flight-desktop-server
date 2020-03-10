@@ -48,9 +48,10 @@ RSpec.describe 'Error Handling' do
   end
 
   def expect_internal_server_error
-    error = parse_last_response_body['errors'].first
-    expect(error['code']).to eq('Internal Server Error')
-    expect(error['status']).to eq(last_response.status.to_s)
+    error = parse_last_response_body.errors.first
+    expect(error.code).to eq('Internal Server Error')
+    expect(error.status).to eq(last_response.status.to_s)
+    expect(error.status).to eq('500')
     expect(error.keys).not_to include('details')
   end
 
@@ -64,6 +65,15 @@ RSpec.describe 'Error Handling' do
     StubError.stub(self) { raise StandardError }
     get_test_error_page
     expect_internal_server_error
+  end
+
+  it 'handles User Not Found' do
+    StubError.stub(self) { raise UserNotFound }
+    get_test_error_page
+    error = parse_last_response_body.errors.first
+    expect(error.code).to eq('User Not Found')
+    expect(error.status).to eq(last_response.status.to_s)
+    expect(error.status).to eq('404')
   end
 end
 

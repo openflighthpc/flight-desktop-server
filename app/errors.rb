@@ -61,6 +61,7 @@ class HttpError < StandardError
 end
 
 class UserNotFound < HttpError
+  self.default_http_status = 404
 end
 
 class InternalServerError < HttpError
