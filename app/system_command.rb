@@ -27,16 +27,31 @@
 # https://github.com/openflighthpc/flight-desktop-server
 #===============================================================================
 
+require 'erb'
+
 class SystemCommand < Hashie::Dash
-  # TODO: Sanitize ID
-  def self.find_session(id, user:)
-    as_user("flight desktop show #{id}", user: user)
+  # TODO: Build shell sanitization into the Renderer
+  class Builder < Hashie::Mash
+    attr_reader :__cmd__
+
+    def initialize(cmd, **opts)
+      @__cmd__ ||= cmd
+      super(opts)
+    end
+
+    def __call__(user)
+      # noop - eventually return instance of SystemCommand
+    end
+
+    private
+
+    def __render__
+      ERB.new(__cmd__, nil, '-').result(binding)
+    end
   end
 
-  private_class_method
-
-  def self.as_user(_command, user:)
-    # noop - eventually return instance of SystemCommand
+  def self.find_session(id, user:)
+    Builder.cmd("flight desktop show <%= id %>", id: id).__call__(user)
   end
 
   property :stdout, default: ''
