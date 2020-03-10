@@ -31,17 +31,68 @@ require 'spec_helper'
 
 RSpec.describe '/sessions' do
   describe 'GET /sessions/:id' do
-    let(:id) { raise NotImplementedError, 'the spec :id has not been set' }
+    let(:url_id) { raise NotImplementedError, 'the spec :id has not been set' }
 
-    before do
-      get "/session/#{id}"
+    def make_request
+      get "/session/#{url_id}"
     end
 
-    context 'when the session is missing' do
-      let(:id) { 'missing' }
+    context 'with a stubbed missing session' do
+      let(:url_id) { 'missing' }
+
+      before do
+        allow(SystemCommand).to receive(:as_user).and_return(SystemCommand.new(code: 1))
+        make_request
+      end
 
       it 'returns 404' do
         expect(last_response).to be_not_found
+      end
+    end
+
+    context 'with a stubbed existing session' do
+      let(:subject) do
+        Session.new(
+          id: "11a8e4a1-9371-4b60-8d00-20441a4f2612",
+          session_type: "gnome",
+          ip: '10.1.0.1',
+          hostname: 'example.com',
+          port: 5956,
+          password: '97InM80d'
+        )
+      end
+
+      before do
+        # NOTE: This stub is based on the raw output from the following:
+        # flight desktop show <id> | cat
+        #
+        # All the sensitive values have been changed for security reasons
+        # However the line spacing has been retained
+        stubbed = SystemCommand.new(
+          stderr: '', code: 0, stdout: <<~STDOUT
+            Identity        #{subject.id}
+            Type    #{subject.session_type}
+            Host IP #{subject.ip}
+            Hostname        #{subject.hostname}
+            Port    #{subject.port}
+            Display IGNORE_THIS_FIELD
+            Password        #{subject.password}
+          STDOUT
+        )
+        allow(SystemCommand).to receive(:as_user).and_return(stubbed)
+        make_request
+      end
+
+      context 'when using a fuzzy id in the end point' do
+        let(:url_id) { subject.id.split('-').first }
+
+        it 'returns okay' do
+          expect(last_response).to be_ok
+        end
+
+        it 'returns the subject as JSON' do
+          expect(parse_last_response_body).to eq(subject.as_json)
+        end
       end
     end
   end

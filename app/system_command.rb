@@ -27,41 +27,13 @@
 # https://github.com/openflighthpc/flight-desktop-server
 #===============================================================================
 
-require 'sinatra'
-require 'sinatra/namespace'
-
-set :show_exceptions, :after_handler
-
-# Converts HttpError objects into their JSON representation. Each object already
-# sets the response code
-error(HttpError) do
-  { errors: [env['sinatra.error']] }.to_json
-end
-
-# Catches all other errors and returns a generic Internal Server Error
-error(StandardError) do
-  { errors: [InternalServerError.new] }.to_json
-end
-
-namespace '/session' do
-  helpers do
-    def id_param
-      params[:id]
-    end
-
-    def current_user
-      nil
-    end
+class SystemCommand < Hashie::Dash
+  def self.as_user(_command, user:)
+    # noop - eventually return instance of SystemCommand
   end
 
-  get('/:id') do
-    session = Session.find_by_fuzzy_id(id_param, user: current_user)
-
-    if session
-      session.to_json
-    else
-      raise NotFound.new(type: 'session', id: id_param)
-    end
-  end
+  property :stdout, default: ''
+  property :stderr, default: ''
+  property :code,   default: 255
 end
 

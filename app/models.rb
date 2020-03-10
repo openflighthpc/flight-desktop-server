@@ -27,4 +27,46 @@
 # https://github.com/openflighthpc/flight-desktop-server
 #===============================================================================
 
+class Session < Hashie::Trash
+  include Hashie::Extensions::Dash::Coercion
+
+  # NOTE: The flight desktop command generates a UUID for each session, however
+  # it also allows accepts shortened versions. This means their is some "fuzziness"
+  # in the ID.
+  #
+  # Revists as necessary, we may want to disable this
+  def self.find_by_fuzzy_id(fuzzy_id, user:)
+    cmd = SystemCommand.as_user('echo IMPLMENT Session.find_by_name; exit 1', user: user)
+    return nil unless cmd.code == 0
+    data = cmd.stdout.split("\n").each_with_object({}) do |line, memo|
+      parts = line.split(/\s+/)
+      value = parts.pop
+      key = case parts.join(' ')
+      when 'Identity'
+        :id
+      when 'Host IP'
+        :ip
+      when 'Hostname'
+        :hostname
+      when 'Port'
+        :port
+      when 'Password'
+        :password
+      when 'Type'
+        :session_type
+      else
+        next # Ignore any extraneous keys
+      end
+      memo[key] = value
+    end
+    new(**data)
+  end
+
+  property :id
+  property :session_type
+  property :ip
+  property :hostname
+  property :port, coerce: String
+  property :password
+end
 

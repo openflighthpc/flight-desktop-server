@@ -50,7 +50,9 @@ task require: :require_bundler do
   require 'sinatra'
   require 'config/initializers/figaro'
   require 'config/initializers/logger'
+  require 'app/system_command'
   require 'app/errors'
+  require 'app/models'
   require 'app'
 end
 
