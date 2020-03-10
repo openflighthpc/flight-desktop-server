@@ -141,10 +141,10 @@ HTTP/2 400 Bad Request
 Content-Type: application/json
 
 {
-  "error": {
+  "errors": [{
     "status": "400",
     "code": "Session Type Not Prepared"
-  }
+  }]
 }
 ```
 
@@ -156,10 +156,10 @@ HTTP/2 400 Bad Request
 Content-Type: application/json
 
 {
-  "error": {
+  "errors": [{
     "status": "400",
     "code": "Unknown Desktop Type"
-  }
+  }]
 }
 ```
 
@@ -336,7 +336,8 @@ If the session is found and terminated, return `204 No Content`.
 
 If the session cannot be found return `404 Not Found`.
 
-If the session cannot be terminate return a `500 Internal Server Error`.
+If the session cannot be terminated for some reason return a `500 Internal
+Server Error`.
 
 
 #### Example
@@ -347,11 +348,10 @@ HTTP/2 500 Internal Server Error
 Content-Type: application/json
 
 {
-  "error": {
+  "errors": [{
     "status": "500",
-    "code": "User Not Available",
-    "detail": <human readable explanation of the problem>
-  }
+    "code": "Internal Server Error"
+  }]
 }
 ```
 
@@ -359,6 +359,11 @@ Content-Type: application/json
 
 
 #### Common errors
+
+All errors reported should follow the [JSON:API error
+specification](https://jsonapi.org/format/#errors).  In particular, the `code`
+key should be included for all errors.  The particular code to use is detailed
+in this document.
 
 If the given user cannot be found in `/etc/passwd`, a "User Not Found" error
 should be reported.
@@ -369,10 +374,10 @@ Example
 HTTP/2 404 Not Found
 
 {
-  "error": {
+  "errors": [{
     "status": "404",
     "code": "User Not Found"
-  }
+  }]
 }
 ```
 
@@ -385,10 +390,10 @@ Example
 HTTP/2 422 Unprocessable Entity
 
 {
-  "error": {
+  "errors": [{
     "status": "422",
     "code": "User Not Available"
-  }
+  }]
 }
 ```
 
@@ -405,10 +410,9 @@ HTTP/2 500 Internal Server Error
 Content-Type: application/json
 
 {
-  "error": {
+  "errors": [{
     "status": "500",
-    "code": "Internal Server Error",
-    "detail": <human readable explanation of the problem>
-  }
+    "code": "Internal Server Error"
+  }]
 }
 ```
