@@ -1,0 +1,19 @@
+# =============================================================================
+# Reference Documentation
+# This document contains the key descriptions for:
+# config/application.yaml
+#
+# This application is configured using `Figaro`. Refer to the documentation
+# for further details:
+# https://github.com/laserlemon/figaro
+#
+# This document is for reference purposes only, setting values here will not
+# configure the application.
+# =============================================================================
+
+# =============================================================================
+# Log Level
+# Specify which level of logging should be used. The supported values are:
+# fatal, error, warn, info, or debug
+# =============================================================================
+log_level:
