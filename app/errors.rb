@@ -40,12 +40,12 @@ class HttpError < StandardError
     @default_http_status ||= 500
   end
 
-  attr_reader :details
+  attr_reader :detail
 
-  def initialize(message = nil, details: nil, http_status: nil)
+  def initialize(message = nil, detail: nil, http_status: nil)
     @http_status = http_status
-    @details = details
-      super([message, details].join("\n"))
+    @detail = detail
+      super([message, detail].join("\n"))
   end
 
   def http_status
@@ -56,18 +56,18 @@ class HttpError < StandardError
     {
       status: self.http_status.to_s,
       code: self.class.code,
-    }.tap { |h| h[:details] = details if details }
+    }.tap { |h| h[:detail] = detail if detail }
   end
 end
 
 class NotFound < HttpError
   self.default_http_status = 404
 
-  def initialize(*a, type: nil, id: nil, details: nil, **opts)
+  def initialize(*a, type: nil, id: nil, detail: nil, **opts)
     if type && id
-      details ||= "Could not find '#{type}': #{id}"
+      detail ||= "Could not find '#{type}': #{id}"
     end
-    super(*a, details: details, **opts)
+    super(*a, detail: detail, **opts)
   end
 end
 
@@ -76,7 +76,7 @@ class UserNotFound < HttpError
 end
 
 class InvalidCommandInput < HttpError
-  self.default_http_status = 400
+  self.default_http_status = 422
 end
 
 class InternalServerError < HttpError

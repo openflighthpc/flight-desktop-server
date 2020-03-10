@@ -79,7 +79,6 @@ a clean environment as the user identified in the `Authorization` header.
 
 The representation for each session must include at a minimum its `id`
 and `type`.
-
 *id*
 
 The identifier for the session as determined by `flight desktop`.
@@ -372,6 +371,7 @@ Example
 
 ```
 HTTP/2 404 Not Found
+Content-Type: application/json
 
 {
   "errors": [{
@@ -388,6 +388,7 @@ Example
 
 ```
 HTTP/2 422 Unprocessable Entity
+Content-Type: application/json
 
 {
   "errors": [{
@@ -401,6 +402,24 @@ XXX We should consider if distinguishing "User Not Found" from "User Not
 Available" exposes the configured users of the cluster and if this is
 something we wish to avoid.
 
+Requests may be rejected if they are deemed to be a security threat. In these
+cases, the "Invalid Command Input" error must be reported. This prevents the
+system commands from having unintended side effects.
+
+Example
+
+```
+HTTP/2 422 Unprocessable Entity
+Content-Type: application/json
+
+{
+  "errors": [{
+    "status": "422",
+    "code": "Invalid Command Input",
+    "detail": <message-about-what-happened>
+  }]
+}
+```
 
 If communication with `flight desktop` fails in an unexpected way return a 500
 error.

@@ -56,7 +56,7 @@ class SystemCommand < Hashie::Dash
     def initialize(cmd, **opts)
       opts.each do |key, value|
         next if value == Shellwords.escape(value)
-        raise InvalidCommandInput.new(details: <<~ERROR.squish)
+        raise InvalidCommandInput.new(detail: <<~ERROR.squish)
           Cowardly refusing to continue with the following #{key}:
           #{value}
         ERROR
