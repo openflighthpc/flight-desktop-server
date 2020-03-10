@@ -27,58 +27,13 @@
 # https://github.com/openflighthpc/flight-desktop-server
 #===============================================================================
 
-class HttpError < StandardError
-  class << self
-    attr_writer :default_http_status, :code
+require 'spec_helper'
+
+RSpec.describe SystemCommand::Builder do
+  it 'raises an error if any options need escaping' do
+    expect do
+      described_class.new('dummy command', nasty: '; rm -rf')
+    end.to raise_error(InvalidCommandInput)
   end
-
-  def self.code
-    @code ||= self.name.titleize
-  end
-
-  def self.default_http_status
-    @default_http_status ||= 500
-  end
-
-  attr_reader :details
-
-  def initialize(message = nil, details: nil, http_status: nil)
-    @http_status = http_status
-    @details = details
-      super([message, details].join("\n"))
-  end
-
-  def http_status
-    @http_status || self.class.default_http_status
-  end
-
-  def as_json(_options={})
-    {
-      status: self.http_status.to_s,
-      code: self.class.code,
-    }.tap { |h| h[:details] = details if details }
-  end
-end
-
-class NotFound < HttpError
-  self.default_http_status = 404
-
-  def initialize(*a, type: nil, id: nil, details: nil, **opts)
-    if type && id
-      details ||= "Could not find '#{type}': #{id}"
-    end
-    super(*a, details: details, **opts)
-  end
-end
-
-class UserNotFound < HttpError
-  self.default_http_status = 404
-end
-
-class InvalidCommandInput < HttpError
-  self.default_http_status = 400
-end
-
-class InternalServerError < HttpError
 end
 

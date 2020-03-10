@@ -28,13 +28,39 @@
 #===============================================================================
 
 require 'erb'
+require 'shellwords'
+
+# NOTE: DEVELOPERS README
+# All system commands should be executed through a SystemCommand::Builder
+# The builder takes the command as an ERB template and associated keys
+#
+# This allows it to "validate" the inputs before substituting them into the
+# command. Inputs are only valid if they match their shell escaped version.
+# Invalid inputs will trigger a user facing error and associated description
+#
+# BEWARE:
+# * The error message is user facing! This means any value may be exposed to
+#   in the error response
+# * This is not input sanitization! Any requests with invalid inputs are
+#   rejected instead of "corrected"
+#
+# RECOMMENDATION:
+# If sensitive information needs to be passed through the system command then
+# the Builder needs to be refactored. Possible have a 'sensitive' top level
+# key for these values?
 
 class SystemCommand < Hashie::Dash
-  # TODO: Build shell sanitization into the Renderer
   class Builder < Hashie::Mash
     attr_reader :__cmd__
 
     def initialize(cmd, **opts)
+      opts.each do |key, value|
+        next if value == Shellwords.escape(value)
+        raise InvalidCommandInput.new(details: <<~ERROR.squish)
+          Cowardly refusing to continue with the following #{key}:
+          #{value}
+        ERROR
+      end
       @__cmd__ ||= cmd
       super(opts)
     end
