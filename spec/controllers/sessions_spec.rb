@@ -191,9 +191,33 @@ RSpec.describe '/sessions' do
         allow(SystemCommand).to receive(:start_session).and_return(stubbed)
       end
 
-      it 'attempts to verify the desktop' do
-        expect(SystemCommand).to receive(:verify_desktop).with(desktop, anything)
+      it 'attempts to prepare the desktop' do
+        expect(SystemCommand).to receive(:prepare_desktop).with(desktop, anything)
         make_request
+      end
+    end
+
+    context 'when verifying a desktop fails' do
+      let(:desktop) { 'unverified' }
+
+      before do
+        stubbed_start = SystemCommand.new(
+          code: 1, stdout: '', stderr: "flight desktop: Desktop type '#{desktop}' has not been verified"
+        )
+        allow(SystemCommand).to receive(:start_session).and_return(stubbed_start)
+
+        stubbed_prepare = SystemCommand.new(code: 1)
+        allow(SystemCommand).to receive(:prepare_desktop).and_return(stubbed_prepare)
+
+        make_request
+      end
+
+      it 'returns 400' do
+        expect(last_response).to be_bad_request
+      end
+
+      it 'returns Desktop Not Prepared' do
+        expect(parse_last_response_body.errors.first.code).to eq('Desktop Not Prepared')
       end
     end
   end

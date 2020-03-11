@@ -53,8 +53,12 @@ class Session < Hashie::Trash
     if cmd.success?
       build_from_output(cmd.stdout.split("\n").last(7))
     elsif /verified\Z/ =~ cmd.stderr
-      verify = SystemCommand.verify_desktop(desktop, user: user)
-      nil
+      prepare = SystemCommand.prepare_desktop(desktop, user: user)
+      if prepare.success?
+        # noop
+      else
+        raise DesktopNotPrepared
+      end
     else
       raise UnknownDesktop
     end

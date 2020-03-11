@@ -69,6 +69,7 @@ class BadRequest < HttpError
 end
 
 class UnknownDesktop < BadRequest; end
+class DesktopNotPrepared < BadRequest; end
 
 class NotFound < HttpError
   self.default_http_status = 404
