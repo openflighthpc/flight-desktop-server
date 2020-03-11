@@ -43,7 +43,7 @@ error(StandardError) do
   { errors: [InternalServerError.new] }.to_json
 end
 
-namespace '/session' do
+namespace '/sessions' do
   helpers do
     def id_param
       params[:id]

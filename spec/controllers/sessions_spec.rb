@@ -34,7 +34,7 @@ RSpec.describe '/sessions' do
     let(:url_id) { raise NotImplementedError, 'the spec :id has not been set' }
 
     def make_request
-      get "/session/#{url_id}"
+      get "/sessions/#{url_id}"
     end
 
     context 'with a stubbed missing session' do
