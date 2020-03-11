@@ -30,54 +30,21 @@
 require 'erb'
 require 'shellwords'
 
-# NOTE: DEVELOPERS README
-# All system commands should be executed through a SystemCommand::Builder
-# The builder takes the command as an ERB template and associated keys
-#
-# This allows it to "validate" the inputs before substituting them into the
-# command. Inputs are only valid if they match their shell escaped version.
-# Invalid inputs will trigger a user facing error and associated description
-#
-# BEWARE:
-# * The error message is user facing! This means any value may be exposed to
-#   in the error response
-# * This is not input sanitization! Any requests with invalid inputs are
-#   rejected instead of "corrected"
-#
-# RECOMMENDATION:
-# If sensitive information needs to be passed through the system command then
-# the Builder needs to be refactored. Possible have a 'sensitive' top level
-# key for these values?
-
 class SystemCommand < Hashie::Dash
-  class Builder < Hashie::Mash
-    attr_reader :__cmd__
+  class Builder
+    attr_reader :base_argv
 
-    def initialize(cmd, **opts)
-      opts.each do |key, value|
-        next if value == Shellwords.escape(value)
-        raise InvalidCommandInput.new(detail: <<~ERROR.squish)
-          Cowardly refusing to continue with the following #{key}:
-          #{value}
-        ERROR
-      end
-      @__cmd__ ||= cmd
-      super(opts)
+    def initialize(cmd)
+      @base_argv ||= cmd.split("\s")
     end
 
-    def __call__(user)
+    def call(*argv, user:)
       # noop - eventually return instance of SystemCommand
-    end
-
-    private
-
-    def __render__
-      ERB.new(__cmd__, nil, '-').result(binding)
     end
   end
 
   def self.find_session(id, user:)
-    Builder.cmd("flight desktop show <%= id %>", id: id).__call__(user)
+    Builder.new("flight desktop show").call(id, user: user)
   end
 
   property :stdout, default: ''

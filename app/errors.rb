@@ -75,10 +75,6 @@ class UserNotFound < HttpError
   self.default_http_status = 404
 end
 
-class InvalidCommandInput < HttpError
-  self.default_http_status = 422
-end
-
 class InternalServerError < HttpError
 end
 
