@@ -213,7 +213,7 @@ RSpec.describe '/sessions' do
 
       before do
         allow(SystemCommand).to receive(:start_session).and_return(unverified_create_stub)
-        allow(SystemCommand).to receive(:prepare_desktop).and_return(exit_1_stub)
+        expect(SystemCommand).to receive(:prepare_desktop).and_return(exit_1_stub)
 
         make_request
       end
@@ -227,12 +227,12 @@ RSpec.describe '/sessions' do
       end
     end
 
-    context 'when verify a desktop succeeds but the create otherwise fails' do
+    context 'when verifing a desktop succeeds but the create otherwise fails' do
       let(:desktop) { 'unverified' }
 
       before do
         allow(SystemCommand).to receive(:start_session).and_return(unverified_create_stub)
-        allow(SystemCommand).to receive(:prepare_desktop).and_return(exit_0_stub)
+        expect(SystemCommand).to receive(:prepare_desktop).and_return(exit_0_stub)
 
         make_request
       end
@@ -242,7 +242,7 @@ RSpec.describe '/sessions' do
       end
     end
 
-    context 'when verify a desktop command succeeds and the retry also succeeds' do
+    context 'when verifing a desktop command succeeds and the retry also succeeds' do
       subject do
         Session.new(
           id: '9633d854-1790-43b2-bf06-f6dc46bb4859',
@@ -260,7 +260,7 @@ RSpec.describe '/sessions' do
         allow(SystemCommand).to receive(:start_session).and_return(
           unverified_create_stub, successful_create_stub
         )
-        allow(SystemCommand).to receive(:prepare_desktop).and_return(exit_0_stub)
+        expect(SystemCommand).to receive(:prepare_desktop).and_return(exit_0_stub)
 
         make_request
       end
