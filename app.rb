@@ -53,7 +53,7 @@ end
 # Adapted from:
 # https://raw.githubusercontent.com/rack/rack-contrib/master/lib/rack/contrib/post_body_content_type_parser.rb
 before do
-  next if env['REQUEST_METHOD'] == 'GET'
+  next if ['GET', 'DELETE'].include? env['REQUEST_METHOD']
   if env['CONTENT_TYPE'] == 'application/json'
     begin
       io = env['rack.input']
@@ -70,37 +70,48 @@ before do
   end
 end
 
+helpers do
+  def current_user
+    nil
+  end
+end
+
 namespace '/sessions' do
   helpers do
-    def id_param
-      params[:id]
-    end
-
     def desktop_param
       params[:desktop].tap do |d|
         next if d
         raise BadRequest.new(detail: 'the "desktop" attribute is required by this request')
       end
     end
-
-    def current_user
-      nil
-    end
-  end
-
-  get('/:id') do
-    session = Session.find_by_fuzzy_id(id_param, user: current_user)
-
-    if session
-      session.to_json
-    else
-      raise NotFound.new(type: 'session', id: id_param)
-    end
   end
 
   post do
     status 201
     Session.start_session(desktop_param, user: current_user).to_json
+  end
+
+  namespace('/:id') do
+    helpers do
+      def id_param
+        params[:id]
+      end
+
+      def current_session
+        Session.find_by_fuzzy_id(id_param, user: current_user).tap do |s|
+          next if s
+          raise NotFound.new(type: 'session', id: id_param)
+        end
+      end
+    end
+
+    get do
+      current_session.to_json
+    end
+
+    delete do
+      current_session
+    end
   end
 end
 

@@ -31,16 +31,12 @@ require 'spec_helper'
 
 RSpec.describe '/sessions' do
   subject { raise NotImplementedError, 'the spec has not defined its subject' }
+  let(:url_id) { raise NotImplementedError, 'the spec :id has not been set' }
+
   let(:exit_1_stub) { SystemCommand.new(code: 1) }
   let(:exit_0_stub) { SystemCommand.new(code: 0) }
 
-  describe 'GET /sessions/:id' do
-    let(:url_id) { raise NotImplementedError, 'the spec :id has not been set' }
-
-    def make_request
-      get "/sessions/#{url_id}"
-    end
-
+  shared_examples 'sessions error when missing' do
     context 'with a stubbed missing session' do
       let(:url_id) { 'missing' }
 
@@ -53,6 +49,14 @@ RSpec.describe '/sessions' do
         expect(last_response).to be_not_found
       end
     end
+  end
+
+  describe 'GET /sessions/:id' do
+    def make_request
+      get "/sessions/#{url_id}"
+    end
+
+    include_examples 'sessions error when missing'
 
     context 'with a stubbed existing session' do
       subject do
@@ -273,6 +277,14 @@ RSpec.describe '/sessions' do
         expect(parse_last_response_body).to eq(subject.as_json)
       end
     end
+  end
+
+  describe 'DELETE /session/:id' do
+    def make_request
+      delete "/sessions/#{url_id}"
+    end
+
+    include_examples 'sessions error when missing'
   end
 end
 
