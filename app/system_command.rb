@@ -29,6 +29,7 @@
 
 require 'erb'
 require 'shellwords'
+require 'open3'
 
 class SystemCommand < Hashie::Dash
   class Builder
@@ -38,8 +39,13 @@ class SystemCommand < Hashie::Dash
       @base_argv ||= cmd.split("\s")
     end
 
+    # TODO: Correctly setup the environment with the user
+    # NOTE: The Bundler.with_clean_env may not be required once the env is setup correctly
     def call(*argv, user:)
-      # noop - eventually return instance of SystemCommand
+      Bundler.with_clean_env do
+        stdout, stderr, status = Open3.capture3(*base_argv, *argv)
+        return SystemCommand.new(stdout: stdout, stderr: stderr, code: status.exitstatus)
+      end
     end
   end
 
