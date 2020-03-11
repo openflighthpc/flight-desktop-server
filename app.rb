@@ -110,7 +110,8 @@ namespace '/sessions' do
     end
 
     delete do
-      current_session.kill_session
+      status 204
+      current_session.kill(user: current_user)
     end
   end
 end

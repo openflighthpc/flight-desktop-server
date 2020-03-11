@@ -280,26 +280,42 @@ RSpec.describe '/sessions' do
   end
 
   describe 'DELETE /session/:id' do
+    subject do
+      Session.new(
+        id: 'ed36dedb-5003-4765-b8dc-0c1cc2922dd7',
+        session_type: 'gnome',
+        ip: '10.1.0.4',
+        hostname: 'example.com',
+        port: 5906,
+        password: 'a33ff119'
+      )
+    end
+
+    let(:url_id) { subject.id }
+
     def make_request
       delete "/sessions/#{url_id}"
     end
 
     include_examples 'sessions error when missing'
 
-    context 'when the kill fails' do
-      subject do
-        Session.new(
-          id: 'ed36dedb-5003-4765-b8dc-0c1cc2922dd7',
-          session_type: 'gnome',
-          ip: '10.1.0.4',
-          hostname: 'example.com',
-          port: 5906,
-          password: 'a33ff119'
-        )
+    context 'when the kill succeeds' do
+      before do
+        allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
+        allow(SystemCommand).to receive(:kill_session).and_return(exit_0_stub)
+        make_request
       end
 
-      let(:url_id) { subject.id }
+      it 'returns 204' do
+        expect(last_response).to be_no_content
+      end
 
+      it 'returns an empty body' do
+        expect(last_response.body).to be_empty
+      end
+    end
+
+    context 'when the kill fails' do
       before do
         allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
         allow(SystemCommand).to receive(:kill_session).and_return(exit_1_stub)
