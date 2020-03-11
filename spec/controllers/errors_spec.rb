@@ -110,6 +110,17 @@ RSpec.describe 'Error Handling' do
         expect(last_response.content_type).to eq('application/json')
       end
     end
+
+    context 'when the body is invalid json' do
+      before do
+        standard_headers
+        post '/test-error-handling', '}{'
+      end
+
+      it 'returns 400' do
+        expect(last_response).to be_bad_request
+      end
+    end
   end
 end
 

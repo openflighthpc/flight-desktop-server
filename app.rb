@@ -49,10 +49,23 @@ before do
 end
 
 # Checks the request Content-Type is application/json where appropriate
+# Saves the input JSON as if it was a form input
+# Adapted from:
+# https://raw.githubusercontent.com/rack/rack-contrib/master/lib/rack/contrib/post_body_content_type_parser.rb
 before do
   next if env['REQUEST_METHOD'] == 'GET'
-  next if env['CONTENT_TYPE'] == 'application/json'
-  raise UnsupportedMediaType
+  if env['CONTENT_TYPE'] == 'application/json'
+    begin
+      io = env['rack.input']
+      body = io.read
+      io.rewind
+      json = body.empty? ? {} : JSON.parse(body, create_additions: false)
+    rescue JSON::ParserError
+      raise BadRequest.new(detail: 'failed to parse body as JSON')
+    end
+  else
+    raise UnsupportedMediaType
+  end
 end
 
 namespace '/sessions' do

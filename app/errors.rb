@@ -37,7 +37,11 @@ class HttpError < StandardError
   end
 
   def self.default_http_status
-    @default_http_status ||= 500
+    @default_http_status ||= if self == HttpError
+                               500
+                             else
+                               superclass.default_http_status
+                             end
   end
 
   attr_reader :detail
@@ -45,7 +49,7 @@ class HttpError < StandardError
   def initialize(message = nil, detail: nil, http_status: nil)
     @http_status = http_status
     @detail = detail
-      super([message, detail].join("\n"))
+    super([message, detail].join("\n"))
   end
 
   def http_status
@@ -60,9 +64,11 @@ class HttpError < StandardError
   end
 end
 
-class UnknownDesktop < HttpError
+class BadRequest < HttpError
   self.default_http_status = 400
 end
+
+class UnknownDesktop < BadRequest; end
 
 class NotFound < HttpError
   self.default_http_status = 404
