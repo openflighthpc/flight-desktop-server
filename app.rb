@@ -60,6 +60,7 @@ before do
       body = io.read
       io.rewind
       json = body.empty? ? {} : JSON.parse(body, create_additions: false)
+      raise BadRequest.new(detail: 'the body must be a JSON hash') unless json.is_a?(Hash)
     rescue JSON::ParserError
       raise BadRequest.new(detail: 'failed to parse body as JSON')
     end
@@ -93,4 +94,3 @@ namespace '/sessions' do
     Session.start_session('_', user: current_user)
   end
 end
-

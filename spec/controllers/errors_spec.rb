@@ -121,6 +121,17 @@ RSpec.describe 'Error Handling' do
         expect(last_response).to be_bad_request
       end
     end
+
+    context 'when the body is a JSON array' do
+      before do
+        standard_headers
+        post '/test-error-handling', '[]'
+      end
+
+      it 'returns 400' do
+        expect(last_response).to be_bad_request
+      end
+    end
   end
 end
 
