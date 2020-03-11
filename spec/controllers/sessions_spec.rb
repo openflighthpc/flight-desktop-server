@@ -31,10 +31,24 @@ require 'spec_helper'
 
 RSpec.describe '/sessions' do
   subject { raise NotImplementedError, 'the spec has not defined its subject' }
-  let(:url_id) { raise NotImplementedError, 'the spec :id has not been set' }
+  let(:url_id) { raise NotImplementedError, 'the spec :url_id has not been set' }
 
   let(:exit_1_stub) { SystemCommand.new(code: 1) }
   let(:exit_0_stub) { SystemCommand.new(code: 0) }
+
+  let(:successful_find_stub) do
+    SystemCommand.new(
+      stderr: '', code: 0, stdout: <<~STDOUT
+        Identity        #{subject.id}
+        Type    #{subject.session_type}
+        Host IP #{subject.ip}
+        Hostname        #{subject.hostname}
+        Port    #{subject.port}
+        Display IGNORE_THIS_FIELD
+        Password        #{subject.password}
+      STDOUT
+    )
+  end
 
   shared_examples 'sessions error when missing' do
     context 'with a stubbed missing session' do
@@ -67,20 +81,6 @@ RSpec.describe '/sessions' do
           hostname: 'example.com',
           port: 5956,
           password: '97InM80d'
-        )
-      end
-
-      let(:successful_find_stub) do
-        SystemCommand.new(
-          stderr: '', code: 0, stdout: <<~STDOUT
-            Identity        #{subject.id}
-            Type    #{subject.session_type}
-            Host IP #{subject.ip}
-            Hostname        #{subject.hostname}
-            Port    #{subject.port}
-            Display IGNORE_THIS_FIELD
-            Password        #{subject.password}
-          STDOUT
         )
       end
 
@@ -285,6 +285,31 @@ RSpec.describe '/sessions' do
     end
 
     include_examples 'sessions error when missing'
+
+    context 'when the kill fails' do
+      subject do
+        Session.new(
+          id: 'ed36dedb-5003-4765-b8dc-0c1cc2922dd7',
+          session_type: 'gnome',
+          ip: '10.1.0.4',
+          hostname: 'example.com',
+          port: 5906,
+          password: 'a33ff119'
+        )
+      end
+
+      let(:url_id) { subject.id }
+
+      before do
+        allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
+        allow(SystemCommand).to receive(:kill_session).and_return(exit_1_stub)
+        make_request
+      end
+
+      it 'returns 500' do
+        expect(last_response.status).to be(500)
+      end
+    end
   end
 end
 

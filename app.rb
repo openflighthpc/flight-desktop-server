@@ -110,7 +110,7 @@ namespace '/sessions' do
     end
 
     delete do
-      current_session
+      current_session.kill_session
     end
   end
 end

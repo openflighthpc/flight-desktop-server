@@ -111,5 +111,14 @@ class Session < Hashie::Trash
   property :hostname
   property :port, coerce: String
   property :password
+
+  def kill(user:)
+    cmd = SystemCommand.kill_session(id, user: user)
+    if cmd.success?
+      true
+    else
+      raise InternalServerError.new(details: 'failed to delete the session')
+    end
+  end
 end
 

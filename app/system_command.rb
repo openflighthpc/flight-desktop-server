@@ -61,6 +61,10 @@ class SystemCommand < Hashie::Dash
     Builder.new("flight desktop prepare").call(desktop, user: user)
   end
 
+  def self.kill_session(id, user:)
+    Builder.new("flight desktop kill").call(id, user: user)
+  end
+
   property :stdout, default: ''
   property :stderr, default: ''
   property :code,   default: 255
