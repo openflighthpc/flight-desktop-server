@@ -99,7 +99,8 @@ namespace '/sessions' do
   end
 
   post do
-    Session.start_session(desktop_param, user: current_user)
+    status 201
+    Session.start_session(desktop_param, user: current_user).to_json
   end
 end
 

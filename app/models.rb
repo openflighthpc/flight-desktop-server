@@ -38,7 +38,23 @@ class Session < Hashie::Trash
   def self.find_by_fuzzy_id(fuzzy_id, user:)
     cmd = SystemCommand.find_session(fuzzy_id, user: user)
     return nil unless cmd.code == 0
-    data = cmd.stdout.split("\n").each_with_object({}) do |line, memo|
+    build_from_output(cmd.stdout)
+  end
+
+  def self.start_session(desktop, user:)
+    cmd = SystemCommand.start_session(desktop, user: user)
+    if cmd.success?
+      build_from_output(cmd.stdout.split("\n").last(7))
+    else
+      raise UnknownDesktop
+    end
+  end
+
+  private_class_method
+
+  def self.build_from_output(lines)
+    lines = lines.split("\n") if lines.is_a?(String)
+    data = lines.each_with_object({}) do |line, memo|
       parts = line.split(/\s+/)
       value = parts.pop
       key = case parts.join(' ')
@@ -60,15 +76,6 @@ class Session < Hashie::Trash
       memo[key] = value
     end
     new(**data)
-  end
-
-  def self.start_session(desktop, user:)
-    cmd = SystemCommand.start_session(desktop, user: user)
-    if cmd.success?
-      # noop
-    else
-      raise UnknownDesktop
-    end
   end
 
   property :id

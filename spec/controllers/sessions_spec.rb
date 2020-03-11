@@ -51,7 +51,7 @@ RSpec.describe '/sessions' do
     end
 
     context 'with a stubbed existing session' do
-      let(:subject) do
+      subject do
         Session.new(
           id: "11a8e4a1-9371-4b60-8d00-20441a4f2612",
           session_type: "gnome",
@@ -133,6 +133,51 @@ RSpec.describe '/sessions' do
 
       it 'returns 400' do
         expect(last_response).to be_bad_request
+      end
+    end
+
+    context 'when creating a validated desktop session' do
+      subject do
+        Session.new(
+          id: '3335bb08-8d91-40fd-a973-da05bdbf3636',
+          session_type: 'definitely-a-validated-desktop-type',
+          ip: '10.1.0.2',
+          hostname: 'example.com',
+          port: 5905,
+          password: 'WakofEb6'
+        )
+      end
+
+      let(:desktop) { subject.session_type }
+
+      before do
+        stubbed = SystemCommand.new(
+          code: 0, stderr: '',
+          stdout: <<~STDOUT
+            Starting a '#{subject.session_type}' desktop session:
+
+               > ✅ Starting session
+
+            A '#{subject.session_type}' desktop session has been started.
+            Identity        #{subject.id}
+            Type    #{subject.session_type}
+            Host IP #{subject.ip}
+            Hostname        #{subject.hostname}
+            Port    #{subject.port}
+            Display IGNORE_THIS_FIELD
+            Password        #{subject.password}
+          STDOUT
+        )
+        allow(SystemCommand).to receive(:start_session).and_return(stubbed)
+        make_request
+      end
+
+      it 'returns 201' do
+        expect(last_response).to be_created
+      end
+
+      it 'returns the subject as JSON' do
+        expect(parse_last_response_body).to eq(subject.as_json)
       end
     end
   end
