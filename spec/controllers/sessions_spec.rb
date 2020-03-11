@@ -240,6 +240,60 @@ RSpec.describe '/sessions' do
         expect(last_response.status).to be(500)
       end
     end
+
+    context 'when verify a desktop command succeeds and the retry also succeeds' do
+      subject do
+        Session.new(
+          id: '9633d854-1790-43b2-bf06-f6dc46bb4859',
+          session_type: 'unverified',
+          ip: '10.1.0.3',
+          hostname: 'example.com',
+          port: 5906,
+          password: 'ca77d490'
+        )
+      end
+
+      let(:desktop) { subject.session_type }
+
+      before do
+        initial_stubbed = SystemCommand.new(
+          code: 1, stdout: '', stderr: "flight desktop: Desktop type '#{desktop}' has not been verified"
+        )
+
+        retry_stubbed = SystemCommand.new(
+          code: 0, stderr: '',
+          stdout: <<~STDOUT
+            Starting a '#{subject.session_type}' desktop session:
+
+               > ✅ Starting session
+
+            A '#{subject.session_type}' desktop session has been started.
+            Identity        #{subject.id}
+            Type    #{subject.session_type}
+            Host IP #{subject.ip}
+            Hostname        #{subject.hostname}
+            Port    #{subject.port}
+            Display IGNORE_THIS_FIELD
+            Password        #{subject.password}
+          STDOUT
+        )
+
+        allow(SystemCommand).to receive(:start_session).and_return(initial_stubbed, retry_stubbed)
+
+        prepare_stubbed = SystemCommand.new(code: 0)
+        allow(SystemCommand).to receive(:prepare_desktop).and_return(prepare_stubbed)
+
+        make_request
+      end
+
+      it 'returns 201' do
+        expect(last_response).to be_created
+      end
+
+      it 'returns the subject as JSON' do
+        expect(parse_last_response_body).to eq(subject.as_json)
+      end
+    end
   end
 end
 

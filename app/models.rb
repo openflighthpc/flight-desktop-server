@@ -63,7 +63,7 @@ class Session < Hashie::Trash
       if prepare.success?
         retried = SystemCommand.start_session(desktop, user: user)
         if retried.success?
-          # noop
+          build_from_output(retried.stdout.split("\n").last(7))
         else
           raise InternalServerError.new(detail: <<~ERROR)
             failed to create the session for an unknown reason
