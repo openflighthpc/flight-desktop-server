@@ -364,6 +364,24 @@ specification](https://jsonapi.org/format/#errors).  In particular, the `code`
 key should be included for all errors.  The particular code to use is detailed
 in this document.
 
+All POST/PATCH/PUT/DELETE requests must formatted as JSON. This includes
+setting the `Content-Type` header to `application/json`. Failure to do so will
+raise the following error.
+
+Example
+
+```
+HTTP/2 415 Unsupported Media Type
+Content-Type: application/json
+
+{
+  "errors": [{
+    "status": "415",
+    "code": "Unsupported Media Type"
+  }]
+}
+```
+
 If the given user cannot be found in `/etc/passwd`, a "User Not Found" error
 should be reported.
 

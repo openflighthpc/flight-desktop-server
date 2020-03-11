@@ -42,38 +42,74 @@ Sinatra::Application.get('/test-error-handling') do
   StubError.call
 end
 
+Sinatra::Application.post('/test-error-handling') do
+  StubError.call
+end
+
 RSpec.describe 'Error Handling' do
-  def get_test_error_page
-    get '/test-error-handling'
+  describe 'GET' do
+    def get_test_error_page
+      get '/test-error-handling'
+    end
+
+    def expect_internal_server_error
+      error = parse_last_response_body.errors.first
+      expect(error.code).to eq('Internal Server Error')
+      expect(error.status).to eq(last_response.status.to_s)
+      expect(error.status).to eq('500')
+      expect(error.keys).not_to include('details')
+      expect(last_response.content_type).to eq('application/json')
+    end
+
+    it 'handles internal server errors' do
+      StubError.stub(self) { raise InternalServerError }
+      get_test_error_page
+      expect_internal_server_error
+    end
+
+    it 'handles unexpected errors' do
+      StubError.stub(self) { raise StandardError }
+      get_test_error_page
+      expect_internal_server_error
+    end
+
+    it 'handles User Not Found' do
+      StubError.stub(self) { raise UserNotFound }
+      get_test_error_page
+      error = parse_last_response_body.errors.first
+      expect(error.code).to eq('User Not Found')
+      expect(error.status).to eq(last_response.status.to_s)
+      expect(error.status).to eq('404')
+    end
   end
 
-  def expect_internal_server_error
-    error = parse_last_response_body.errors.first
-    expect(error.code).to eq('Internal Server Error')
-    expect(error.status).to eq(last_response.status.to_s)
-    expect(error.status).to eq('500')
-    expect(error.keys).not_to include('details')
-  end
+  describe 'POST' do
+    context 'when Content-Type is set to "application/json"' do
+      before do
+        header 'Content-Type', 'application/json'
+        post '/test-error-handling', ''
+      end
 
-  it 'handles internal server errors' do
-    StubError.stub(self) { raise InternalServerError }
-    get_test_error_page
-    expect_internal_server_error
-  end
+      it 'returns 200' do
+        expect(last_response).to be_ok
+      end
 
-  it 'handles unexpected errors' do
-    StubError.stub(self) { raise StandardError }
-    get_test_error_page
-    expect_internal_server_error
-  end
+      it 'sets the response Content-Type' do
+        expect(last_response.content_type).to eq('application/json')
+      end
+    end
 
-  it 'handles User Not Found' do
-    StubError.stub(self) { raise UserNotFound }
-    get_test_error_page
-    error = parse_last_response_body.errors.first
-    expect(error.code).to eq('User Not Found')
-    expect(error.status).to eq(last_response.status.to_s)
-    expect(error.status).to eq('404')
+    context 'when Content-Type has not been set' do
+      before { post '/test-error-handling' }
+
+      it 'returns 415' do
+        expect(last_response.status).to be(415)
+      end
+
+      it 'sets the response Content-Type' do
+        expect(last_response.content_type).to eq('application/json')
+      end
+    end
   end
 end
 

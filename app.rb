@@ -43,6 +43,18 @@ error(StandardError) do
   { errors: [InternalServerError.new] }.to_json
 end
 
+# Sets the response Content-Type
+before do
+  content_type 'application/json'
+end
+
+# Checks the request Content-Type is application/json where appropriate
+before do
+  next if env['REQUEST_METHOD'] == 'GET'
+  next if env['CONTENT_TYPE'] == 'application/json'
+  raise UnsupportedMediaType
+end
+
 namespace '/sessions' do
   helpers do
     def id_param

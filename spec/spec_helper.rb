@@ -57,6 +57,10 @@ RSpec.configure do |c|
     last_request.env['sinatra.error']
   end
 
+  def standard_headers
+    header 'Content-Type', 'application/json'
+  end
+
   # Disable the SystemCommand::Builder from creating commands
   # This forces all system commands to be mocked
   c.before do

@@ -82,3 +82,7 @@ end
 class InternalServerError < HttpError
 end
 
+class UnsupportedMediaType < HttpError
+  self.default_http_status = 415
+end
+

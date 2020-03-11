@@ -101,6 +101,7 @@ RSpec.describe '/sessions' do
     let(:desktop) { raise NotImplementedError, 'the spec :desktop has not been set' }
 
     def make_request
+      standard_headers
       post '/sessions', { desktop: desktop }.to_json
     end
 
