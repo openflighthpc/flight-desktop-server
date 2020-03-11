@@ -48,6 +48,12 @@ class Session < Hashie::Trash
   #         This makes the toggle brittle as a minor change in error message
   #         could break the regex match. Instead `flight desktop` should be
   #         updated to return different exit codes
+  #
+  # DEV NOTE: This method has grown in complexity, it should be broken out
+  #           into helper object. Also the distinction between UnknownDesktop
+  #           and the InternalServerError should be improved. Their is a case
+  #           where an InteralServerError would be interpreted as an
+  #           UnknownDesktop
   def self.start_session(desktop, user:)
     cmd = SystemCommand.start_session(desktop, user: user)
     if cmd.success?
@@ -55,7 +61,14 @@ class Session < Hashie::Trash
     elsif /verified\Z/ =~ cmd.stderr
       prepare = SystemCommand.prepare_desktop(desktop, user: user)
       if prepare.success?
-        # noop
+        retried = SystemCommand.start_session(desktop, user: user)
+        if retried.success?
+          # noop
+        else
+          raise InternalServerError.new(detail: <<~ERROR)
+            failed to create the session for an unknown reason
+          ERROR
+        end
       else
         raise DesktopNotPrepared
       end
