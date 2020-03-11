@@ -136,11 +136,11 @@ RSpec.describe '/sessions' do
       end
     end
 
-    context 'when creating a validated desktop session' do
+    context 'when creating a verified desktop session' do
       subject do
         Session.new(
           id: '3335bb08-8d91-40fd-a973-da05bdbf3636',
-          session_type: 'definitely-a-validated-desktop-type',
+          session_type: 'definitely-a-verified-desktop-type',
           ip: '10.1.0.2',
           hostname: 'example.com',
           port: 5905,
@@ -178,6 +178,22 @@ RSpec.describe '/sessions' do
 
       it 'returns the subject as JSON' do
         expect(parse_last_response_body).to eq(subject.as_json)
+      end
+    end
+
+    context 'when creating a unverified desktop' do
+      let(:desktop) { 'unverified' }
+
+      before do
+        stubbed = SystemCommand.new(
+          code: 1, stdout: '', stderr: "flight desktop: Desktop type '#{desktop}' has not been verified"
+        )
+        allow(SystemCommand).to receive(:start_session).and_return(stubbed)
+      end
+
+      it 'attempts to verify the desktop' do
+        expect(SystemCommand).to receive(:verify_desktop).with(desktop, anything)
+        make_request
       end
     end
   end

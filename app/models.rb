@@ -41,10 +41,20 @@ class Session < Hashie::Trash
     build_from_output(cmd.stdout)
   end
 
+  # NOTE: The start_session will attempt to verify the desktop if required
+  # GOTCHA: Because the system command always exits 1 on errors, the
+  #         verified/ missing toggle is based on string processing.
+  #
+  #         This makes the toggle brittle as a minor change in error message
+  #         could break the regex match. Instead `flight desktop` should be
+  #         updated to return different exit codes
   def self.start_session(desktop, user:)
     cmd = SystemCommand.start_session(desktop, user: user)
     if cmd.success?
       build_from_output(cmd.stdout.split("\n").last(7))
+    elsif /verified\Z/ =~ cmd.stderr
+      verify = SystemCommand.verify_desktop(desktop, user: user)
+      nil
     else
       raise UnknownDesktop
     end
