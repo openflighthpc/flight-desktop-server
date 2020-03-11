@@ -124,6 +124,17 @@ RSpec.describe '/sessions' do
         expect(parse_last_response_body.errors.first.code).to eq('Unknown Desktop')
       end
     end
+
+    context 'when the request does not send a desktop' do
+      before do
+        standard_headers
+        post '/sessions'
+      end
+
+      it 'returns 400' do
+        expect(last_response).to be_bad_request
+      end
+    end
   end
 end
 

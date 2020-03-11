@@ -61,6 +61,7 @@ before do
       io.rewind
       json = body.empty? ? {} : JSON.parse(body, create_additions: false)
       raise BadRequest.new(detail: 'the body must be a JSON hash') unless json.is_a?(Hash)
+      json.each { |k, v| params[k] ||= v }
     rescue JSON::ParserError
       raise BadRequest.new(detail: 'failed to parse body as JSON')
     end
@@ -73,6 +74,13 @@ namespace '/sessions' do
   helpers do
     def id_param
       params[:id]
+    end
+
+    def desktop_param
+      params[:desktop].tap do |d|
+        next if d
+        raise BadRequest.new(detail: 'the "desktop" attribute is required by this request')
+      end
     end
 
     def current_user
@@ -91,6 +99,7 @@ namespace '/sessions' do
   end
 
   post do
-    Session.start_session('_', user: current_user)
+    Session.start_session(desktop_param, user: current_user)
   end
 end
+
