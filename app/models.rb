@@ -62,6 +62,15 @@ class Session < Hashie::Trash
     new(**data)
   end
 
+  def self.start_session(desktop, user:)
+    cmd = SystemCommand.start_session(desktop, user: user)
+    if cmd.success?
+      # noop
+    else
+      raise UnknownDesktop
+    end
+  end
+
   property :id
   property :session_type
   property :ip

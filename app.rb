@@ -63,5 +63,9 @@ namespace '/sessions' do
       raise NotFound.new(type: 'session', id: id_param)
     end
   end
+
+  post do
+    Session.start_session('_', user: current_user)
+  end
 end
 

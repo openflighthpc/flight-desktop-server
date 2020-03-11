@@ -157,7 +157,7 @@ Content-Type: application/json
 {
   "errors": [{
     "status": "400",
-    "code": "Unknown Desktop Type"
+    "code": "Unknown Desktop"
   }]
 }
 ```

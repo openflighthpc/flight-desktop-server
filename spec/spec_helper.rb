@@ -53,7 +53,19 @@ RSpec.configure do |c|
     Hashie::Mash.new(JSON.parse(last_response.body))
   end
 
-  def last_request_error
+  def last_error
     last_request.env['sinatra.error']
   end
+
+  # Disable the SystemCommand::Builder from creating commands
+  # This forces all system commands to be mocked
+  c.before do
+    allow(SystemCommand::Builder).to receive(:new).and_wrap_original do |_, *a|
+      raise NotImplementedError, <<~ERROR.squish
+        Running system commands is not supported in the spec. The following
+        needs to be stubbed: '#{a.first}'
+      ERROR
+    end
+  end
 end
+

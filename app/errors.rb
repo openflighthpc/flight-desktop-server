@@ -60,6 +60,10 @@ class HttpError < StandardError
   end
 end
 
+class UnknownDesktop < HttpError
+  self.default_http_status = 400
+end
+
 class NotFound < HttpError
   self.default_http_status = 404
 

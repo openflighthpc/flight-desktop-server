@@ -53,8 +53,16 @@ class SystemCommand < Hashie::Dash
     Builder.new("flight desktop show").call(id, user: user)
   end
 
+  def self.start_session(desktop, user:)
+    Builder.new("flight desktop start").call(desktop, user: user)
+  end
+
   property :stdout, default: ''
   property :stderr, default: ''
   property :code,   default: 255
+
+  def success?
+    code == 0
+  end
 end
 

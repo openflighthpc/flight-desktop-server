@@ -96,5 +96,33 @@ RSpec.describe '/sessions' do
       end
     end
   end
+
+  describe 'POST /sessions' do
+    let(:desktop) { raise NotImplementedError, 'the spec :desktop has not been set' }
+
+    def make_request
+      post '/sessions', { desktop: desktop }.to_json
+    end
+
+    context 'when the request sends a missing desktop' do
+      let(:desktop) { 'missing' }
+
+      before do
+        stubbed = SystemCommand.new(
+          code: 1, stdout: '', stderr: "flight desktop: unknown desktop type: #{desktop}"
+        )
+        allow(SystemCommand).to receive(:start_session).and_return(stubbed)
+        make_request
+      end
+
+      it 'returns 400' do
+        expect(last_response).to be_bad_request
+      end
+
+      it 'returns Unknown Desktop' do
+        expect(parse_last_response_body.errors.first.code).to eq('Unknown Desktop')
+      end
+    end
+  end
 end
 
