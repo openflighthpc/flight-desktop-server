@@ -30,6 +30,10 @@
 require 'spec_helper'
 
 RSpec.describe '/sessions' do
+  subject { raise NotImplementedError, 'the spec has not defined its subject' }
+  let(:exit_1_stub) { SystemCommand.new(code: 1) }
+  let(:exit_0_stub) { SystemCommand.new(code: 0) }
+
   describe 'GET /sessions/:id' do
     let(:url_id) { raise NotImplementedError, 'the spec :id has not been set' }
 
@@ -41,7 +45,7 @@ RSpec.describe '/sessions' do
       let(:url_id) { 'missing' }
 
       before do
-        allow(SystemCommand).to receive(:find_session).and_return(SystemCommand.new(code: 1))
+        allow(SystemCommand).to receive(:find_session).and_return(exit_1_stub)
         make_request
       end
 
@@ -62,13 +66,8 @@ RSpec.describe '/sessions' do
         )
       end
 
-      before do
-        # NOTE: This stub is based on the raw output from the following:
-        # flight desktop show <id> | cat
-        #
-        # All the sensitive values have been changed for security reasons
-        # However the line spacing has been retained
-        stubbed = SystemCommand.new(
+      let(:successful_find_stub) do
+        SystemCommand.new(
           stderr: '', code: 0, stdout: <<~STDOUT
             Identity        #{subject.id}
             Type    #{subject.session_type}
@@ -79,7 +78,10 @@ RSpec.describe '/sessions' do
             Password        #{subject.password}
           STDOUT
         )
-        allow(SystemCommand).to receive(:find_session).and_return(stubbed)
+      end
+
+      before do
+        allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
         make_request
       end
 
@@ -100,6 +102,38 @@ RSpec.describe '/sessions' do
   describe 'POST /sessions' do
     let(:desktop) { raise NotImplementedError, 'the spec :desktop has not been set' }
 
+    let(:successful_create_stub) do
+      SystemCommand.new(
+        code: 0, stderr: '',
+        stdout: <<~STDOUT
+          Starting a '#{subject.session_type}' desktop session:
+
+             > ✅ Starting session
+
+          A '#{subject.session_type}' desktop session has been started.
+          Identity        #{subject.id}
+          Type    #{subject.session_type}
+          Host IP #{subject.ip}
+          Hostname        #{subject.hostname}
+          Port    #{subject.port}
+          Display IGNORE_THIS_FIELD
+          Password        #{subject.password}
+        STDOUT
+      )
+    end
+
+    let(:unknown_create_stub) do
+      SystemCommand.new(
+        code: 1, stdout: '', stderr: "flight desktop: unknown desktop type: #{desktop}"
+      )
+    end
+
+    let(:unverified_create_stub) do
+      SystemCommand.new(
+        code: 1, stdout: '', stderr: "flight desktop: Desktop type '#{desktop}' has not been verified"
+      )
+    end
+
     def make_request
       standard_headers
       post '/sessions', { desktop: desktop }.to_json
@@ -109,10 +143,7 @@ RSpec.describe '/sessions' do
       let(:desktop) { 'missing' }
 
       before do
-        stubbed = SystemCommand.new(
-          code: 1, stdout: '', stderr: "flight desktop: unknown desktop type: #{desktop}"
-        )
-        allow(SystemCommand).to receive(:start_session).and_return(stubbed)
+        allow(SystemCommand).to receive(:start_session).and_return(unknown_create_stub)
         make_request
       end
 
@@ -151,24 +182,7 @@ RSpec.describe '/sessions' do
       let(:desktop) { subject.session_type }
 
       before do
-        stubbed = SystemCommand.new(
-          code: 0, stderr: '',
-          stdout: <<~STDOUT
-            Starting a '#{subject.session_type}' desktop session:
-
-               > ✅ Starting session
-
-            A '#{subject.session_type}' desktop session has been started.
-            Identity        #{subject.id}
-            Type    #{subject.session_type}
-            Host IP #{subject.ip}
-            Hostname        #{subject.hostname}
-            Port    #{subject.port}
-            Display IGNORE_THIS_FIELD
-            Password        #{subject.password}
-          STDOUT
-        )
-        allow(SystemCommand).to receive(:start_session).and_return(stubbed)
+        allow(SystemCommand).to receive(:start_session).and_return(successful_create_stub)
         make_request
       end
 
@@ -185,10 +199,7 @@ RSpec.describe '/sessions' do
       let(:desktop) { 'unverified' }
 
       before do
-        stubbed = SystemCommand.new(
-          code: 1, stdout: '', stderr: "flight desktop: Desktop type '#{desktop}' has not been verified"
-        )
-        allow(SystemCommand).to receive(:start_session).and_return(stubbed)
+        allow(SystemCommand).to receive(:start_session).and_return(unverified_create_stub)
       end
 
       it 'attempts to prepare the desktop' do
@@ -201,13 +212,8 @@ RSpec.describe '/sessions' do
       let(:desktop) { 'unverified' }
 
       before do
-        stubbed_start = SystemCommand.new(
-          code: 1, stdout: '', stderr: "flight desktop: Desktop type '#{desktop}' has not been verified"
-        )
-        allow(SystemCommand).to receive(:start_session).and_return(stubbed_start)
-
-        stubbed_prepare = SystemCommand.new(code: 1)
-        allow(SystemCommand).to receive(:prepare_desktop).and_return(stubbed_prepare)
+        allow(SystemCommand).to receive(:start_session).and_return(unverified_create_stub)
+        allow(SystemCommand).to receive(:prepare_desktop).and_return(exit_1_stub)
 
         make_request
       end
@@ -225,13 +231,8 @@ RSpec.describe '/sessions' do
       let(:desktop) { 'unverified' }
 
       before do
-        stubbed_start = SystemCommand.new(
-          code: 1, stdout: '', stderr: "flight desktop: Desktop type '#{desktop}' has not been verified"
-        )
-        allow(SystemCommand).to receive(:start_session).and_return(stubbed_start)
-
-        stubbed_prepare = SystemCommand.new(code: 0)
-        allow(SystemCommand).to receive(:prepare_desktop).and_return(stubbed_prepare)
+        allow(SystemCommand).to receive(:start_session).and_return(unverified_create_stub)
+        allow(SystemCommand).to receive(:prepare_desktop).and_return(exit_0_stub)
 
         make_request
       end
@@ -256,32 +257,10 @@ RSpec.describe '/sessions' do
       let(:desktop) { subject.session_type }
 
       before do
-        initial_stubbed = SystemCommand.new(
-          code: 1, stdout: '', stderr: "flight desktop: Desktop type '#{desktop}' has not been verified"
+        allow(SystemCommand).to receive(:start_session).and_return(
+          unverified_create_stub, successful_create_stub
         )
-
-        retry_stubbed = SystemCommand.new(
-          code: 0, stderr: '',
-          stdout: <<~STDOUT
-            Starting a '#{subject.session_type}' desktop session:
-
-               > ✅ Starting session
-
-            A '#{subject.session_type}' desktop session has been started.
-            Identity        #{subject.id}
-            Type    #{subject.session_type}
-            Host IP #{subject.ip}
-            Hostname        #{subject.hostname}
-            Port    #{subject.port}
-            Display IGNORE_THIS_FIELD
-            Password        #{subject.password}
-          STDOUT
-        )
-
-        allow(SystemCommand).to receive(:start_session).and_return(initial_stubbed, retry_stubbed)
-
-        prepare_stubbed = SystemCommand.new(code: 0)
-        allow(SystemCommand).to receive(:prepare_desktop).and_return(prepare_stubbed)
+        allow(SystemCommand).to receive(:prepare_desktop).and_return(exit_0_stub)
 
         make_request
       end
