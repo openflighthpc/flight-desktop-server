@@ -67,7 +67,11 @@ RSpec.configure do |c|
     last_request.env['sinatra.error']
   end
 
-  def standard_headers
+  def standard_get_headers
+  end
+
+  def standard_post_headers
+    standard_get_headers
     header 'Content-Type', 'application/json'
   end
 

@@ -49,6 +49,7 @@ end
 RSpec.describe 'Error Handling' do
   describe 'GET' do
     def get_test_error_page
+      standard_get_headers
       get '/test-error-handling'
     end
 
@@ -86,7 +87,7 @@ RSpec.describe 'Error Handling' do
   describe 'POST' do
     context 'when Content-Type is set to "application/json"' do
       before do
-        header 'Content-Type', 'application/json'
+        standard_post_headers
         post '/test-error-handling', ''
       end
 
@@ -113,7 +114,7 @@ RSpec.describe 'Error Handling' do
 
     context 'when the body is invalid json' do
       before do
-        standard_headers
+        standard_post_headers
         post '/test-error-handling', '}{'
       end
 
@@ -124,7 +125,7 @@ RSpec.describe 'Error Handling' do
 
     context 'when the body is a JSON array' do
       before do
-        standard_headers
+        standard_post_headers
         post '/test-error-handling', '[]'
       end
 

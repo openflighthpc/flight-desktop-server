@@ -67,6 +67,7 @@ RSpec.describe '/sessions' do
 
   describe 'GET /sessions' do
     def make_request
+      standard_get_headers
       get '/sessions'
     end
 
@@ -150,6 +151,7 @@ RSpec.describe '/sessions' do
 
   describe 'GET /sessions/:id' do
     def make_request
+      standard_get_headers
       get "/sessions/#{url_id}"
     end
 
@@ -188,6 +190,7 @@ RSpec.describe '/sessions' do
 
   describe 'GET /sessions/:id/screenshot' do
     def make_request
+      standard_get_headers
       get "/sessions/#{url_id}/screenshot"
     end
 
@@ -303,7 +306,7 @@ RSpec.describe '/sessions' do
     end
 
     def make_request
-      standard_headers
+      standard_post_headers
       post '/sessions', { desktop: desktop }.to_json
     end
 
@@ -326,7 +329,7 @@ RSpec.describe '/sessions' do
 
     context 'when the request does not send a desktop' do
       before do
-        standard_headers
+        standard_post_headers
         post '/sessions'
       end
 
