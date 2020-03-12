@@ -113,6 +113,10 @@ namespace '/sessions' do
       current_session.to_json
     end
 
+    get '/screenshot' do
+      current_session
+    end
+
     delete do
       status 204
       current_session.kill(user: current_user)

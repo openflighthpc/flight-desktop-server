@@ -186,6 +186,14 @@ RSpec.describe '/sessions' do
     end
   end
 
+  describe 'GET /sessions/:id/screenshot' do
+    def make_request
+      get "/sessions/#{url_id}/screenshot"
+    end
+
+    include_examples 'sessions error when missing'
+  end
+
   describe 'POST /sessions' do
     let(:desktop) { raise NotImplementedError, 'the spec :desktop has not been set' }
 
