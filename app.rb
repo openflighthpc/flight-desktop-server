@@ -114,7 +114,8 @@ namespace '/sessions' do
     end
 
     get '/screenshot' do
-      Screenshot.new(current_session).read
+      content_type 'image/png'
+      Screenshot.new(current_session).base64_encode
     end
 
     delete do

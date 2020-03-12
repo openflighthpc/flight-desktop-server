@@ -27,6 +27,8 @@
 # https://github.com/openflighthpc/flight-desktop-server
 #===============================================================================
 
+require 'base64'
+
 class Session < Hashie::Trash
   include Hashie::Extensions::Dash::Coercion
 
@@ -162,10 +164,14 @@ Screenshot = Struct.new(:session) do
     File.join(Figaro.env.flight_desktop_cache_dir!, 'sessions', id, 'session.png')
   end
 
+  def base64_encode
+    Base64.encode64(read)
+  end
+
   def read
     p = self.class.path(session.id)
     if File.exists?(p)
-      # noop
+      File.read(p)
     else
       raise NotFound.new(id: session.id, type: 'screenshot')
     end

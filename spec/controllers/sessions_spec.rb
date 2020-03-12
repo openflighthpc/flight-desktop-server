@@ -214,6 +214,57 @@ RSpec.describe '/sessions' do
         expect(last_response).to be_not_found
       end
     end
+
+    context 'with a existing screenshot' do
+      subject do
+        Session.new(
+          id: "6d1f1937-3812-486b-9bfb-38c3c85b34e9",
+          desktop: "kde",
+          ip: '10.101.0.5',
+          hostname: 'example.com',
+          port: 5944,
+          password: '29d20f04'
+        )
+      end
+
+      let(:screenshot) do
+        <<~SCREEN
+          A `bunch`, of "random" characters! They should be base64 encoded? &&**?><>}{[]££""''
+          ++**--!!"!£"$^£&"£$£"$%$&**()()?<>~@:{}@~}{@{{P
+
+          On further inspection, the random characters aren't required as the base64 is
+          encodes base on 6-bits not 8. ¯\_(ツ)_/¯
+        SCREEN
+      end
+
+      let(:screenshot_base64) do
+        Base64.encode64(screenshot)
+      end
+
+      let(:url_id) { subject.id }
+
+      before do
+        allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
+        FakeFS.with do
+          path = Screenshot.path(subject.id)
+          FileUtils.mkdir_p(File.dirname path)
+          File.write(path, screenshot)
+          make_request
+        end
+      end
+
+      it 'returns 200' do
+        expect(last_response).to be_ok
+      end
+
+      it 'sets the Content-Type correctly' do
+        expect(last_response.headers['Content-Type']).to eq('image/png')
+      end
+
+      it 'responds with the base64 encoded image' do
+        expect(last_response.body).to eq(screenshot_base64)
+      end
+    end
   end
 
   describe 'POST /sessions' do
