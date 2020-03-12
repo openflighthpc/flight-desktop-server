@@ -48,6 +48,7 @@ group :development, :test do
 end
 
 group :test do
+  gem 'fakefs', require: 'fakefs/safe'
   gem 'rack-test'
   gem 'rspec'
   gem 'rspec-collection_matchers'

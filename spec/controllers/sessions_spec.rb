@@ -192,6 +192,28 @@ RSpec.describe '/sessions' do
     end
 
     include_examples 'sessions error when missing'
+
+    context 'with a missing screenshot' do
+      subject do
+        Session.new(
+          id: "72e2f8d3-dea5-465c-b8d5-67336c7f8680",
+          desktop: "xfce",
+          ip: '10.101.0.4',
+          hostname: 'example.com',
+          port: 5942,
+          password: 'b74fbb5d'
+        )
+      end
+
+      let(:url_id) { subject.id }
+
+      it 'returns 404' do
+        allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
+        expect(Screenshot).to receive(:path).with(url_id)
+        FakeFS.with { make_request }
+        expect(last_response).to be_not_found
+      end
+    end
   end
 
   describe 'POST /sessions' do

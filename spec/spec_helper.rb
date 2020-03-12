@@ -71,14 +71,23 @@ RSpec.configure do |c|
     header 'Content-Type', 'application/json'
   end
 
-  # Disable the SystemCommand::Builder from creating commands
-  # This forces all system commands to be mocked
   c.before do
+    # Disable the SystemCommand::Builder from creating commands
+    # This forces all system commands to be mocked
     allow(SystemCommand::Builder).to receive(:new).and_wrap_original do |_, *a|
       raise NotImplementedError, <<~ERROR.squish
         Running system commands is not supported in the spec. The following
         needs to be stubbed: '#{a.first}'
       ERROR
+    end
+
+    # Disable the ability to generate screenshot paths unless FakeFS has been activated
+    # This makes FakeFS mandatory when testing screenshots
+    allow(Screenshot).to receive(:path).and_wrap_original do |method, *a|
+      raise NotImplementedError, <<~ERROR.squish unless FakeFS.activated?
+        FakeFS must be activated when using Screenshot.path
+      ERROR
+      method.call(*a)
     end
   end
 end

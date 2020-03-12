@@ -161,5 +161,14 @@ Screenshot = Struct.new(:session) do
   def self.path(id)
     File.join(Figaro.env.flight_desktop_cache_dir!, 'sessions', id, 'session.png')
   end
+
+  def read
+    p = self.class.path(session.id)
+    if File.exists?(p)
+      # noop
+    else
+      raise NotFound.new(id: session.id, type: 'screenshot')
+    end
+  end
 end
 

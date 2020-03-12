@@ -114,7 +114,7 @@ namespace '/sessions' do
     end
 
     get '/screenshot' do
-      current_session
+      Screenshot.new(current_session).read
     end
 
     delete do
