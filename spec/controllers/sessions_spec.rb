@@ -40,7 +40,7 @@ RSpec.describe '/sessions' do
     SystemCommand.new(
       stderr: '', code: 0, stdout: <<~STDOUT
         Identity        #{subject.id}
-        Type    #{subject.session_type}
+        Type    #{subject.desktop}
         Host IP #{subject.ip}
         Hostname        #{subject.hostname}
         Port    #{subject.port}
@@ -101,7 +101,7 @@ RSpec.describe '/sessions' do
         [
           {
             id: '0362d58b-f29a-4b99-9a0a-277c902daa55',
-            session_type: 'gnome',
+            desktop: 'gnome',
             hostname: 'example.com',
             ip: '10.101.0.1',
             port: 5901,
@@ -109,7 +109,7 @@ RSpec.describe '/sessions' do
           },
           {
             id: '135036a4-0471-4014-ab56-7b65648895df',
-            session_type: 'kde',
+            desktop: 'kde',
             hostname: 'example.com',
             ip: '10.101.0.2',
             port: 5902,
@@ -117,7 +117,7 @@ RSpec.describe '/sessions' do
           },
           {
             id: '135c07c2-5c9f-4e32-9372-a408d2bbe621',
-            session_type: 'xfce',
+            desktop: 'xfce',
             hostname: 'example.com',
             ip: '10.101.0.3',
             port: 5903,
@@ -128,7 +128,7 @@ RSpec.describe '/sessions' do
 
       let(:index_multiple_stub) do
         stdout = subject.each_with_index.map do |s, idx|
-          "#{s.id}    #{s.session_type}   #{s.hostname} #{s.ip}     #{idx}       #{s.port}    #{41360 + idx}   #{s.password}        Active"
+          "#{s.id}    #{s.desktop}   #{s.hostname} #{s.ip}     #{idx}       #{s.port}    #{41360 + idx}   #{s.password}        Active"
         end.join("\n")
         SystemCommand.new(stdout: stdout, stderr: '', code: 0)
       end
@@ -159,7 +159,7 @@ RSpec.describe '/sessions' do
       subject do
         Session.new(
           id: "11a8e4a1-9371-4b60-8d00-20441a4f2612",
-          session_type: "gnome",
+          desktop: "gnome",
           ip: '10.1.0.1',
           hostname: 'example.com',
           port: 5956,
@@ -193,13 +193,13 @@ RSpec.describe '/sessions' do
       SystemCommand.new(
         code: 0, stderr: '',
         stdout: <<~STDOUT
-          Starting a '#{subject.session_type}' desktop session:
+          Starting a '#{subject.desktop}' desktop session:
 
              > ✅ Starting session
 
-          A '#{subject.session_type}' desktop session has been started.
+          A '#{subject.desktop}' desktop session has been started.
           Identity        #{subject.id}
-          Type    #{subject.session_type}
+          Type    #{subject.desktop}
           Host IP #{subject.ip}
           Hostname        #{subject.hostname}
           Port    #{subject.port}
@@ -258,7 +258,7 @@ RSpec.describe '/sessions' do
       subject do
         Session.new(
           id: '3335bb08-8d91-40fd-a973-da05bdbf3636',
-          session_type: 'definitely-a-verified-desktop-type',
+          desktop: 'definitely-a-verified-desktop-type',
           ip: '10.1.0.2',
           hostname: 'example.com',
           port: 5905,
@@ -266,7 +266,7 @@ RSpec.describe '/sessions' do
         )
       end
 
-      let(:desktop) { subject.session_type }
+      let(:desktop) { subject.desktop }
 
       before do
         allow(SystemCommand).to receive(:start_session).and_return(successful_create_stub)
@@ -333,7 +333,7 @@ RSpec.describe '/sessions' do
       subject do
         Session.new(
           id: '9633d854-1790-43b2-bf06-f6dc46bb4859',
-          session_type: 'unverified',
+          desktop: 'unverified',
           ip: '10.1.0.3',
           hostname: 'example.com',
           port: 5906,
@@ -341,7 +341,7 @@ RSpec.describe '/sessions' do
         )
       end
 
-      let(:desktop) { subject.session_type }
+      let(:desktop) { subject.desktop }
 
       before do
         allow(SystemCommand).to receive(:start_session).and_return(
@@ -366,7 +366,7 @@ RSpec.describe '/sessions' do
     subject do
       Session.new(
         id: 'ed36dedb-5003-4765-b8dc-0c1cc2922dd7',
-        session_type: 'gnome',
+        desktop: 'gnome',
         ip: '10.1.0.4',
         hostname: 'example.com',
         port: 5906,

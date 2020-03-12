@@ -37,7 +37,7 @@ class Session < Hashie::Trash
         parts = line.squish.split(' ')
         new(
           id: parts[0],
-          session_type: parts[1],
+          desktop: parts[1],
           hostname: parts[2],
           ip: parts[3],
           port: parts[5],
@@ -115,7 +115,7 @@ class Session < Hashie::Trash
       when 'Password'
         :password
       when 'Type'
-        :session_type
+        :desktop
       else
         next # Ignore any extraneous keys
       end
@@ -125,7 +125,7 @@ class Session < Hashie::Trash
   end
 
   property :id
-  property :session_type
+  property :desktop
   property :ip
   property :hostname
   property :port, coerce: String
@@ -138,7 +138,7 @@ class Session < Hashie::Trash
   def as_json(_ = {})
     {
       'id' => id,
-      'desktop' => session_type,
+      'desktop' => desktop,
       'ip' => ip,
       'hostname' => hostname,
       'port' => port,
