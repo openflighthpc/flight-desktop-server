@@ -47,6 +47,13 @@ Sinatra::Application.post('/test-error-handling') do
 end
 
 RSpec.describe 'Error Handling' do
+  context 'with missing credentials' do
+    it 'returns 401' do
+      get '/test-error-handling'
+      expect(last_response).to be_unauthorized
+    end
+  end
+
   describe 'GET' do
     def get_test_error_page
       standard_get_headers
@@ -101,7 +108,10 @@ RSpec.describe 'Error Handling' do
     end
 
     context 'when Content-Type has not been set' do
-      before { post '/test-error-handling' }
+      before do
+        standard_get_headers
+        post '/test-error-handling'
+      end
 
       it 'returns 415' do
         expect(last_response.status).to be(415)

@@ -68,6 +68,7 @@ RSpec.configure do |c|
   end
 
   def standard_get_headers
+    header 'Authorization', "Basic #{Base64.encode64('user:password')}"
   end
 
   def standard_post_headers

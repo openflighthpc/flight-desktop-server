@@ -461,6 +461,7 @@ RSpec.describe '/sessions' do
     let(:url_id) { subject.id }
 
     def make_request
+      standard_get_headers
       delete "/sessions/#{url_id}"
     end
 

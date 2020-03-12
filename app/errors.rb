@@ -93,3 +93,7 @@ class UnsupportedMediaType < HttpError
   self.default_http_status = 415
 end
 
+class Unauthorized < HttpError
+  self.default_http_status = 401
+end
+

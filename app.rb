@@ -48,6 +48,16 @@ before do
   content_type 'application/json'
 end
 
+# Validates the user's credentials from the authorization header
+before do
+  parts = (env['HTTP_AUTHORIZATION'] || '').chomp.split(' ')
+  raise Unauthorized if parts.empty?
+end
+
+helpers do
+  attr_reader :current_user
+end
+
 # Checks the request Content-Type is application/json where appropriate
 # Saves the input JSON as if it was a form input
 # Adapted from:
@@ -67,12 +77,6 @@ before do
     end
   else
     raise UnsupportedMediaType
-  end
-end
-
-helpers do
-  def current_user
-    nil
   end
 end
 
