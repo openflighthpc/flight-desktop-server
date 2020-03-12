@@ -87,7 +87,7 @@ namespace '/sessions' do
   end
 
   get do
-    [].to_json
+    Session.index(user: current_user).to_json
   end
 
   post do

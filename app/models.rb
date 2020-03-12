@@ -30,6 +30,25 @@
 class Session < Hashie::Trash
   include Hashie::Extensions::Dash::Coercion
 
+  def self.index(user:)
+    cmd = SystemCommand.index_sessions(user: user)
+    if cmd.success?
+      cmd.stdout.split("\n").map do |line|
+        parts = line.squish.split(' ')
+        new(
+          id: parts[0],
+          session_type: parts[1],
+          hostname: parts[2],
+          ip: parts[3],
+          port: parts[5],
+          password: parts[7]
+        )
+      end
+    else
+      raise InternalServerError
+    end
+  end
+
   # NOTE: The flight desktop command generates a UUID for each session, however
   # it also allows accepts shortened versions. This means their is some "fuzziness"
   # in the ID.

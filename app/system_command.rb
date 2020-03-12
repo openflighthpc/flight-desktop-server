@@ -50,6 +50,7 @@ class SystemCommand < Hashie::Dash
   end
 
   def self.index_sessions(user:)
+    Builder.new('flight desktop list').call(user: user)
   end
 
   def self.find_session(id, user:)

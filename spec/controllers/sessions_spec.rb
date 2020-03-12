@@ -84,6 +84,68 @@ RSpec.describe '/sessions' do
         expect(parse_last_response_body).to eq([])
       end
     end
+
+    context 'when the index system command fails' do
+      before do
+        allow(SystemCommand).to receive(:index_sessions).and_return(exit_1_stub)
+        make_request
+      end
+
+      it 'returns 500' do
+        expect(last_response.status).to be(500)
+      end
+    end
+
+    context 'with multiple running sessions' do
+      subject do
+        [
+          {
+            id: '0362d58b-f29a-4b99-9a0a-277c902daa55',
+            session_type: 'gnome',
+            hostname: 'example.com',
+            ip: '10.101.0.1',
+            port: 5901,
+            password: 'GovCosh6'
+          },
+          {
+            id: '135036a4-0471-4014-ab56-7b65648895df',
+            session_type: 'kde',
+            hostname: 'example.com',
+            ip: '10.101.0.2',
+            port: 5902,
+            password: 'Dinzeph3'
+          },
+          {
+            id: '135c07c2-5c9f-4e32-9372-a408d2bbe621',
+            session_type: 'xfce',
+            hostname: 'example.com',
+            ip: '10.101.0.3',
+            port: 5903,
+            password: '5wroliv5'
+          }
+        ].map { |h| Session.new(**h) }
+      end
+
+      let(:index_multiple_stub) do
+        stdout = subject.each_with_index.map do |s, idx|
+          "#{s.id}    #{s.session_type}   #{s.hostname} #{s.ip}     #{idx}       #{s.port}    #{41360 + idx}   #{s.password}        Active"
+        end.join("\n")
+        SystemCommand.new(stdout: stdout, stderr: '', code: 0)
+      end
+
+      before do
+        allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
+        make_request
+      end
+
+      it 'returns 200' do
+        expect(last_response).to be_ok
+      end
+
+      it 'returns the subject as JSON' do
+        expect(parse_last_response_body).to eq(subject.as_json)
+      end
+    end
   end
 
   describe 'GET /sessions/:id' do
