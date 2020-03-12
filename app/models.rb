@@ -131,6 +131,21 @@ class Session < Hashie::Trash
   property :port, coerce: String
   property :password
 
+  def to_json
+    as_json.to_json
+  end
+
+  def as_json(_ = {})
+    {
+      'id' => id,
+      'desktop' => session_type,
+      'ip' => ip,
+      'hostname' => hostname,
+      'port' => port,
+      'password' => password
+    }
+  end
+
   def kill(user:)
     cmd = SystemCommand.kill_session(id, user: user)
     if cmd.success?
