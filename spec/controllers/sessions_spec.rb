@@ -65,6 +65,27 @@ RSpec.describe '/sessions' do
     end
   end
 
+  describe 'GET /sessions' do
+    def make_request
+      get '/sessions'
+    end
+
+    context 'without any running sessions' do
+      before do
+        allow(SystemCommand).to receive(:index_sessions).and_return(exit_0_stub)
+        make_request
+      end
+
+      it 'returns 200' do
+        expect(last_response).to be_ok
+      end
+
+      it 'returns an empty array' do
+        expect(parse_last_response_body).to eq([])
+      end
+    end
+  end
+
   describe 'GET /sessions/:id' do
     def make_request
       get "/sessions/#{url_id}"

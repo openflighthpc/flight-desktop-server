@@ -49,6 +49,9 @@ class SystemCommand < Hashie::Dash
     end
   end
 
+  def self.index_sessions(user:)
+  end
+
   def self.find_session(id, user:)
     Builder.new("flight desktop show").call(id, user: user)
   end
@@ -57,12 +60,12 @@ class SystemCommand < Hashie::Dash
     Builder.new("flight desktop start").call(desktop, user: user)
   end
 
-  def self.prepare_desktop(desktop, user:)
-    Builder.new("flight desktop prepare").call(desktop, user: user)
-  end
-
   def self.kill_session(id, user:)
     Builder.new("flight desktop kill").call(id, user: user)
+  end
+
+  def self.prepare_desktop(desktop, user:)
+    Builder.new("flight desktop prepare").call(desktop, user: user)
   end
 
   property :stdout, default: ''

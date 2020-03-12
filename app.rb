@@ -86,6 +86,10 @@ namespace '/sessions' do
     end
   end
 
+  get do
+    [].to_json
+  end
+
   post do
     status 201
     Session.start_session(desktop_param, user: current_user).to_json

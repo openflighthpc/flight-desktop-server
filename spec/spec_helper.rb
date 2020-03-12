@@ -46,11 +46,21 @@ RSpec.configure do |c|
 	c.include RSpecSinatraMixin
 
   def parse_last_request_body
-    Hashie::Mash.new(JSON.parse(last_request.body))
+    json = JSON.parse(last_request.body)
+    if json.is_a?(Array)
+      json.map { |x| Hashie::Mash.new(x) }
+    else
+      Hashie::Mash.new(json)
+    end
   end
 
   def parse_last_response_body
-    Hashie::Mash.new(JSON.parse(last_response.body))
+    json = JSON.parse(last_response.body)
+    if json.is_a?(Array)
+      json.map { |x| Hashie::Mash.new(x) }
+    else
+      Hashie::Mash.new(json)
+    end
   end
 
   def last_error
