@@ -156,3 +156,10 @@ class Session < Hashie::Trash
   end
 end
 
+Screenshot = Struct.new(:session) do
+  # Stored as a class method so it can be stubbed in the tests
+  def self.path(id)
+    File.join(Figaro.env.flight_desktop_cache_dir!, 'sessions', id, 'session.png')
+  end
+end
+

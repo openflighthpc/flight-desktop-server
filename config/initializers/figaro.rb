@@ -39,6 +39,11 @@ Figaro.load
 # Hard sets the app's root directory to the current code base
 ENV['app_root_dir'] = File.expand_path('../..', __dir__)
 
+# Set the cache directory as an ENV VAR, this allows it to be configurable in
+# the future using Figaro
+base = Figaro.env.XDG_CACHE_HOME || File.expand_path('.cache', Figaro.env.HOME!)
+ENV['flight_desktop_cache_dir'] = File.expand_path('flight/desktop', base)
+
 # Enforce the generally required keys
 Figaro.require_keys('log_level')
 
