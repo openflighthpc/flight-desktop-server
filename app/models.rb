@@ -82,7 +82,9 @@ class Session < Hashie::Trash
       build_from_output(cmd.stdout.split("\n").last(7), user: user)
     elsif /verified\Z/ =~ cmd.stderr
       verify = SystemCommand.verify_desktop(desktop, user: user)
-      if verify.success?
+      if /already been verified\.\Z/ =~ verify.stdout.chomp
+        raise InternalServerError
+      elsif verify.success?
         retried = SystemCommand.start_session(desktop, user: user)
         if retried.success?
           build_from_output(retried.stdout.split("\n").last(7), user: user)

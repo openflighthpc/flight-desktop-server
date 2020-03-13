@@ -426,6 +426,28 @@ RSpec.describe '/sessions' do
       end
     end
 
+    # This is an odd case that shouldn't ever be hit. Notionally the create should succeed
+    # as the desktop has already been verified. However due to the string processing involved,
+    # a edge case could be triggered. Therefore it must explicitly return a InternalServerError
+    context 'when the create gives a false-postive unverfied response' do
+      let(:desktop) { 'false-positive-unverfied' }
+
+      let(:already_verified_stub) do
+        SystemCommand.new(
+          code: 0, stderr: '', stdout: "Desktop type #{desktop} has already been verified.")
+      end
+
+      before do
+        allow(SystemCommand).to receive(:start_session).and_return(unverified_create_stub)
+        allow(SystemCommand).to receive(:verify_desktop).and_return(already_verified_stub)
+        make_request
+      end
+
+      it 'returns 500' do
+        expect(last_response.status).to be(500)
+      end
+    end
+
     context 'when verifing a desktop succeeds but the create otherwise fails' do
       let(:desktop) { 'unverified' }
 
