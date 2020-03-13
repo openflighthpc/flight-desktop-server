@@ -333,6 +333,19 @@ RSpec.describe '/sessions' do
       )
     end
 
+    let(:successful_verified_stub) do
+      SystemCommand.new(
+        code: 0, stderr: '', stdout: <<~STDOUT
+          Verifying desktop type #{desktop}:
+
+             > ✅ Package: #{desktop}-package
+             > ✅ Package: #{desktop}-other-package
+
+          Desktop type #{desktop} has been verified.
+        STDOUT
+      )
+    end
+
     def make_request
       standard_post_headers
       post '/sessions', { desktop: desktop }.to_json
@@ -451,7 +464,7 @@ RSpec.describe '/sessions' do
 
       before do
         allow(SystemCommand).to receive(:start_session).and_return(unverified_create_stub)
-        expect(SystemCommand).to receive(:verify_desktop).and_return(exit_0_stub)
+        expect(SystemCommand).to receive(:verify_desktop).and_return(successful_verified_stub)
 
         make_request
       end
@@ -479,7 +492,7 @@ RSpec.describe '/sessions' do
         allow(SystemCommand).to receive(:start_session).and_return(
           unverified_create_stub, successful_create_stub
         )
-        expect(SystemCommand).to receive(:verify_desktop).and_return(exit_0_stub)
+        expect(SystemCommand).to receive(:verify_desktop).and_return(successful_verified_stub)
 
         make_request
       end
