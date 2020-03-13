@@ -41,9 +41,19 @@ module RSpecSinatraMixin
   end
 end
 
+module SharedUsernameAndPassword
+  extend RSpec::SharedContext
+
+  let(:username) { 'default-test-user' }
+  let(:password) { 'default-test-password' }
+end
+
 RSpec.configure do |c|
 	# Include the Sinatra helps into the application
 	c.include RSpecSinatraMixin
+
+  # Include the username and password
+  c.include SharedUsernameAndPassword
 
   def parse_last_request_body
     json = JSON.parse(last_request.body)
@@ -68,7 +78,7 @@ RSpec.configure do |c|
   end
 
   def standard_get_headers
-    header 'Authorization', "Basic #{Base64.encode64('user:password')}"
+    header 'Authorization', "Basic #{Base64.encode64("#{username}:#{password}")}"
   end
 
   def standard_post_headers
@@ -77,6 +87,10 @@ RSpec.configure do |c|
   end
 
   c.before do
+    # Disable RPAM from running in the spec. This way users don't need configuring
+    # It will always return authenticated unless otherwise stubbed
+    allow(PamAuth).to receive(:valid?).and_return(true)
+
     # Disable the SystemCommand::Builder from creating commands
     # This forces all system commands to be mocked
     allow(SystemCommand::Builder).to receive(:new).and_wrap_original do |_, *a|

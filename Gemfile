@@ -29,7 +29,7 @@
 
 source "https://rubygems.org"
 
-git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
+git_source(:github) { |repo_name| "https://github.com/#{repo_name}" }
 
 gem 'activesupport', require: 'active_support/all'
 gem 'faraday'
@@ -37,6 +37,7 @@ gem 'figaro'
 gem 'hashie'
 gem 'puma'
 gem 'rake'
+gem 'rpam-ruby19', require: 'rpam'
 gem 'sinatra'
 gem 'sinatra-namespace'
 

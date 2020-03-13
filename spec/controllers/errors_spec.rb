@@ -47,11 +47,48 @@ Sinatra::Application.post('/test-error-handling') do
 end
 
 RSpec.describe 'Error Handling' do
-  context 'with missing credentials' do
+  shared_examples 'returns 401' do
     it 'returns 401' do
       get '/test-error-handling'
       expect(last_response).to be_unauthorized
     end
+  end
+
+  context 'with missing credentials' do
+    include_examples 'returns 401'
+  end
+
+  context 'with a non Basic authorization scheme' do
+    before do
+      header 'Authorization', "Bearer bearer-tokens-are-not-supported"
+    end
+
+    include_examples 'returns 401'
+  end
+
+  context 'with missing base64 encoding' do
+    before do
+      header 'Authorization', "Basic"
+    end
+
+    include_examples 'returns 401'
+  end
+
+  context 'with junk credentials' do
+    before do
+      header 'Authorization', "Basic anVuaw=="
+    end
+
+    include_examples 'returns 401'
+  end
+
+  context 'with invalid credentials' do
+    before do
+      allow(PamAuth).to receive(:valid?).and_return(false)
+      standard_get_headers
+    end
+
+    include_examples 'returns 401'
   end
 
   describe 'GET' do

@@ -43,19 +43,29 @@ error(StandardError) do
   { errors: [InternalServerError.new] }.to_json
 end
 
+class PamAuth
+  def self.valid?(username, password)
+    Rpam.auth(user, password, service: 'login')
+  end
+end
+
 # Sets the response Content-Type
 before do
   content_type 'application/json'
 end
 
+helpers do
+  attr_accessor :current_user
+end
+
 # Validates the user's credentials from the authorization header
 before do
   parts = (env['HTTP_AUTHORIZATION'] || '').chomp.split(' ')
-  raise Unauthorized if parts.empty?
-end
-
-helpers do
-  attr_reader :current_user
+  raise Unauthorized unless parts.length == 2 && parts.first == 'Basic'
+  username, password = Base64.decode64(parts.last).split(':', 2)
+  raise Unauthorized unless username && password
+  raise Unauthorized unless PamAuth.valid?(username, password)
+  self.current_user = username
 end
 
 # Checks the request Content-Type is application/json where appropriate
@@ -78,6 +88,11 @@ before do
   else
     raise UnsupportedMediaType
   end
+end
+
+# Sets the response Content-Type
+before do
+  content_type 'application/json'
 end
 
 namespace '/sessions' do
