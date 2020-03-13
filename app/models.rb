@@ -63,6 +63,42 @@ class Session < Hashie::Trash
     build_from_output(cmd.stdout, user: user)
   end
 
+  class Starter < Hashie::Dash
+    property :desktop, required: true
+    property :user, required: true
+
+    def call
+      cmd = start
+      if /verified\z/ =~ cmd.stderr
+        verify
+        cmd = start
+      end
+      raise UnknownDesktop if /unknown desktop type/ =~ cmd.stderr
+      raise InternalServerError unless cmd.success?
+      cmd
+    end
+
+    private
+
+    def start
+      SystemCommand.start_session(desktop, user: user)
+    end
+
+    def verify
+      cmd = SystemCommand.verify_desktop(desktop, user: user)
+      cmd.raise_unless_successful
+      if /already been verified\.\Z/ =~ cmd.stdout.chomp
+        raise InternalServerError
+      elsif /flight desktop prepare/ =~ cmd.stdout
+        raise DesktopNotPrepared
+      elsif cmd.success?
+        # noop
+      else
+        raise InternalServerError
+      end
+    end
+  end
+
   # NOTE: The start_session will attempt to verify the desktop if required
   # GOTCHA: Because the system command always exits 1 on errors, the
   #         verified/ missing toggle is based on string processing.
@@ -70,36 +106,9 @@ class Session < Hashie::Trash
   #         This makes the toggle brittle as a minor change in error message
   #         could break the regex match. Instead `flight desktop` should be
   #         updated to return different exit codes
-  #
-  # DEV NOTE: This method has grown in complexity, it should be broken out
-  #           into helper object. Also the distinction between UnknownDesktop
-  #           and the InternalServerError should be improved. Their is a case
-  #           where an InteralServerError would be interpreted as an
-  #           UnknownDesktop
   def self.start_session(desktop, user:)
-    cmd = SystemCommand.start_session(desktop, user: user)
-    if cmd.success?
-      build_from_output(cmd.stdout.split("\n").last(7), user: user)
-    elsif /verified\Z/ =~ cmd.stderr
-      verify = SystemCommand.verify_desktop(desktop, user: user)
-      verify.raise_unless_successful
-      if /already been verified\.\Z/ =~ verify.stdout.chomp
-        raise InternalServerError
-      elsif /flight desktop prepare/ =~ verify.stdout
-        raise DesktopNotPrepared
-      else
-        retried = SystemCommand.start_session(desktop, user: user)
-        if retried.success?
-          build_from_output(retried.stdout.split("\n").last(7), user: user)
-        else
-          raise InternalServerError.new(detail: <<~ERROR)
-            failed to create the session for an unknown reason
-          ERROR
-        end
-      end
-    else
-      raise UnknownDesktop
-    end
+    cmd = Starter.new(desktop: desktop, user: user).call
+    build_from_output(cmd.stdout.split("\n").last(7), user: user)
   end
 
   private_class_method
