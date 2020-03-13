@@ -82,9 +82,10 @@ class Session < Hashie::Trash
       build_from_output(cmd.stdout.split("\n").last(7), user: user)
     elsif /verified\Z/ =~ cmd.stderr
       verify = SystemCommand.verify_desktop(desktop, user: user)
+      verify.raise_unless_successful
       if /already been verified\.\Z/ =~ verify.stdout.chomp
         raise InternalServerError
-      elsif verify.success?
+      else
         retried = SystemCommand.start_session(desktop, user: user)
         if retried.success?
           build_from_output(retried.stdout.split("\n").last(7), user: user)
@@ -93,8 +94,6 @@ class Session < Hashie::Trash
             failed to create the session for an unknown reason
           ERROR
         end
-      else
-        raise DesktopNotPrepared
       end
     else
       raise UnknownDesktop

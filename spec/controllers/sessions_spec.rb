@@ -407,6 +407,8 @@ RSpec.describe '/sessions' do
       end
     end
 
+    # This checks the error handling if the verify command fails. It does not mean the
+    # desktop is unverified. In cases where the desktop is unverified, the command exits 0
     context 'when verifying a desktop fails' do
       let(:desktop) { 'unverified' }
 
@@ -417,12 +419,8 @@ RSpec.describe '/sessions' do
         make_request
       end
 
-      it 'returns 400' do
-        expect(last_response).to be_bad_request
-      end
-
-      it 'returns Desktop Not Prepared' do
-        expect(parse_last_response_body.errors.first.code).to eq('Desktop Not Prepared')
+      it 'returns 500' do
+        expect(last_response.status).to be(500)
       end
     end
 
