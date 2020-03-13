@@ -164,6 +164,7 @@ Screenshot = Struct.new(:session) do
   # Stored as a class method so it can be stubbed in the tests
   def self.path(username, id)
     cmd = SystemCommand.echo_cache_dir(user: username)
+    cmd.raise_unless_successful
     File.join(cmd.stdout.chomp, 'flight/desktop/sessions', id, 'session.png')
   end
 

@@ -95,5 +95,10 @@ class SystemCommand < Hashie::Dash
   def success?
     code == 0
   end
+
+  def raise_unless_successful
+    return if success?
+    raise InternalServerError
+  end
 end
 

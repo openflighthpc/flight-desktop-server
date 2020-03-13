@@ -223,6 +223,28 @@ RSpec.describe '/sessions' do
       end
     end
 
+    context 'when getting the cache directory fails' do
+      subject do
+        Session.new(
+          id: "72e2f8d3-dea5-465c-b8d5-67336c7f8680",
+          desktop: "xfce",
+          ip: '10.101.0.4',
+          hostname: 'example.com',
+          port: 5942,
+          password: 'b74fbb5d'
+        )
+      end
+
+      let(:url_id) { subject.id }
+
+      it 'returns 500' do
+        allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
+        allow(SystemCommand).to receive(:echo_cache_dir).and_return(exit_1_stub)
+        FakeFS.with { make_request }
+        expect(last_response.status).to be(500)
+      end
+    end
+
     context 'with a existing screenshot' do
       subject do
         Session.new(
