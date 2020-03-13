@@ -194,6 +194,10 @@ RSpec.describe '/sessions' do
       get "/sessions/#{url_id}/screenshot"
     end
 
+    let(:successful_cache_dir_stub) do
+      SystemCommand.new(stderr: '', code: 0, stdout: "/home/#{username}/.cache\n")
+    end
+
     include_examples 'sessions error when missing'
 
     context 'with a missing screenshot' do
@@ -212,7 +216,8 @@ RSpec.describe '/sessions' do
 
       it 'returns 404' do
         allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
-        expect(Screenshot).to receive(:path).with(url_id)
+        allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
+        expect(Screenshot).to receive(:path).with(username, url_id)
         FakeFS.with { make_request }
         expect(last_response).to be_not_found
       end
@@ -248,8 +253,9 @@ RSpec.describe '/sessions' do
 
       before do
         allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
+        allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         FakeFS.with do
-          path = Screenshot.path(subject.id)
+          path = Screenshot.path(username, subject.id)
           FileUtils.mkdir_p(File.dirname path)
           File.write(path, screenshot)
           make_request

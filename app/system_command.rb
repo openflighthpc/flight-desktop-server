@@ -49,6 +49,25 @@ class SystemCommand < Hashie::Dash
     end
   end
 
+  # NOTE: This system command is required to determine the cache directory the screenshot
+  # is stored within. This is required as it is specific to each user and most be done
+  # as a system call.
+  #
+  # System commands are executed without a shell to prevent injection attacks. However
+  # a shell is required to expand the environment variables. This is "OK" as the method
+  # does not have any inputs. However the bash command needs to be executed manually.
+  #
+  # This design pattern is only required as `flight desktop` does not provide a method
+  # to get the screenshot. This does violate the law of demeter and should be rectified:
+  # See https://en.wikipedia.org/wiki/Law_of_Demeter
+  #
+  # NOTE: SECURITY NOTICE
+  # echo_cache_dir MUST NOT take any inputs. It is executing through a shell and therefore
+  # it is possible to preform an injection attack
+  def self.echo_cache_dir(user:)
+    Builder.new("bash -c").call('echo ${XDG_CACHE_HOME:-$HOME/.cache}', user: user)
+  end
+
   def self.index_sessions(user:)
     Builder.new('flight desktop list').call(user: user)
   end

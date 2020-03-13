@@ -43,7 +43,8 @@ class Session < Hashie::Trash
           hostname: parts[2],
           ip: parts[3],
           port: parts[5],
-          password: parts[7]
+          password: parts[7],
+          user: user
         )
       end
     else
@@ -59,7 +60,7 @@ class Session < Hashie::Trash
   def self.find_by_fuzzy_id(fuzzy_id, user:)
     cmd = SystemCommand.find_session(fuzzy_id, user: user)
     return nil unless cmd.code == 0
-    build_from_output(cmd.stdout)
+    build_from_output(cmd.stdout, user: user)
   end
 
   # NOTE: The start_session will attempt to verify the desktop if required
@@ -78,13 +79,13 @@ class Session < Hashie::Trash
   def self.start_session(desktop, user:)
     cmd = SystemCommand.start_session(desktop, user: user)
     if cmd.success?
-      build_from_output(cmd.stdout.split("\n").last(7))
+      build_from_output(cmd.stdout.split("\n").last(7), user: user)
     elsif /verified\Z/ =~ cmd.stderr
       prepare = SystemCommand.prepare_desktop(desktop, user: user)
       if prepare.success?
         retried = SystemCommand.start_session(desktop, user: user)
         if retried.success?
-          build_from_output(retried.stdout.split("\n").last(7))
+          build_from_output(retried.stdout.split("\n").last(7), user: user)
         else
           raise InternalServerError.new(detail: <<~ERROR)
             failed to create the session for an unknown reason
@@ -100,7 +101,7 @@ class Session < Hashie::Trash
 
   private_class_method
 
-  def self.build_from_output(lines)
+  def self.build_from_output(lines, user:)
     lines = lines.split("\n") if lines.is_a?(String)
     data = lines.each_with_object({}) do |line, memo|
       parts = line.split(/\s+/)
@@ -123,7 +124,7 @@ class Session < Hashie::Trash
       end
       memo[key] = value
     end
-    new(**data)
+    new(user: user, **data)
   end
 
   property :id
@@ -132,6 +133,7 @@ class Session < Hashie::Trash
   property :hostname
   property :port, coerce: String
   property :password
+  property :user
 
   def to_json
     as_json.to_json
@@ -160,8 +162,9 @@ end
 
 Screenshot = Struct.new(:session) do
   # Stored as a class method so it can be stubbed in the tests
-  def self.path(id)
-    File.join(Figaro.env.flight_desktop_cache_dir!, 'sessions', id, 'session.png')
+  def self.path(username, id)
+    cmd = SystemCommand.echo_cache_dir(user: username)
+    File.join(cmd.stdout.chomp, 'flight/desktop/sessions', id, 'session.png')
   end
 
   def base64_encode
@@ -169,7 +172,7 @@ Screenshot = Struct.new(:session) do
   end
 
   def read
-    p = self.class.path(session.id)
+    p = self.class.path(session.user, session.id)
     if File.exists?(p)
       File.read(p)
     else
