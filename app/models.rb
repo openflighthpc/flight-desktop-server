@@ -81,8 +81,8 @@ class Session < Hashie::Trash
     if cmd.success?
       build_from_output(cmd.stdout.split("\n").last(7), user: user)
     elsif /verified\Z/ =~ cmd.stderr
-      prepare = SystemCommand.prepare_desktop(desktop, user: user)
-      if prepare.success?
+      verify = SystemCommand.verify_desktop(desktop, user: user)
+      if verify.success?
         retried = SystemCommand.start_session(desktop, user: user)
         if retried.success?
           build_from_output(retried.stdout.split("\n").last(7), user: user)

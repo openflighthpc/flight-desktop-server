@@ -84,8 +84,8 @@ class SystemCommand < Hashie::Dash
     Builder.new("flight desktop kill").call(id, user: user)
   end
 
-  def self.prepare_desktop(desktop, user:)
-    Builder.new("flight desktop prepare").call(desktop, user: user)
+  def self.verify_desktop(desktop, user:)
+    Builder.new("flight desktop verify").call(desktop, user: user)
   end
 
   property :stdout, default: ''

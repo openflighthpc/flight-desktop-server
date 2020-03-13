@@ -401,8 +401,8 @@ RSpec.describe '/sessions' do
         allow(SystemCommand).to receive(:start_session).and_return(unverified_create_stub)
       end
 
-      it 'attempts to prepare the desktop' do
-        expect(SystemCommand).to receive(:prepare_desktop).with(desktop, anything)
+      it 'attempts to verify the desktop' do
+        expect(SystemCommand).to receive(:verify_desktop).with(desktop, anything)
         make_request
       end
     end
@@ -412,7 +412,7 @@ RSpec.describe '/sessions' do
 
       before do
         allow(SystemCommand).to receive(:start_session).and_return(unverified_create_stub)
-        expect(SystemCommand).to receive(:prepare_desktop).and_return(exit_1_stub)
+        expect(SystemCommand).to receive(:verify_desktop).and_return(exit_1_stub)
 
         make_request
       end
@@ -431,7 +431,7 @@ RSpec.describe '/sessions' do
 
       before do
         allow(SystemCommand).to receive(:start_session).and_return(unverified_create_stub)
-        expect(SystemCommand).to receive(:prepare_desktop).and_return(exit_0_stub)
+        expect(SystemCommand).to receive(:verify_desktop).and_return(exit_0_stub)
 
         make_request
       end
@@ -459,7 +459,7 @@ RSpec.describe '/sessions' do
         allow(SystemCommand).to receive(:start_session).and_return(
           unverified_create_stub, successful_create_stub
         )
-        expect(SystemCommand).to receive(:prepare_desktop).and_return(exit_0_stub)
+        expect(SystemCommand).to receive(:verify_desktop).and_return(exit_0_stub)
 
         make_request
       end
