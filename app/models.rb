@@ -85,6 +85,8 @@ class Session < Hashie::Trash
       verify.raise_unless_successful
       if /already been verified\.\Z/ =~ verify.stdout.chomp
         raise InternalServerError
+      elsif /flight desktop prepare/ =~ verify.stdout
+        raise DesktopNotPrepared
       else
         retried = SystemCommand.start_session(desktop, user: user)
         if retried.success?

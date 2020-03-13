@@ -342,6 +342,7 @@ RSpec.describe '/sessions' do
              > ✅ Package: #{desktop}-other-package
 
           Desktop type #{desktop} has been verified.
+
         STDOUT
       )
     end
@@ -456,6 +457,48 @@ RSpec.describe '/sessions' do
 
       it 'returns 500' do
         expect(last_response.status).to be(500)
+      end
+    end
+
+    # This tests when the verify command exits 0 but the desktop is otherwise unverified
+    context 'when a desktop is successfully unverified' do
+      let(:desktop) { 'can-not-be-verified' }
+
+      let(:unsuccessful_verified_stub) do
+        SystemCommand.new(
+          code: 0, stderr: '', stdout: <<~STDOUT
+            Verifying desktop type #{desktop}:
+
+               > ❌ Repository: #{desktop}
+               > ❌ Package: #{desktop}-package
+
+            Desktop type chrome has missing prerequisites:
+
+             * Package repo: #{desktop}
+             * Package: #{desktop}-package
+
+            Before this desktop type can be used, it must be prepared using the
+            'prepare' command, i.e.:
+
+              flight desktop prepare #{desktop}
+
+          STDOUT
+        )
+      end
+
+      before do
+        expect(SystemCommand).to receive(:start_session).once.and_return(unverified_create_stub)
+        allow(SystemCommand).to receive(:verify_desktop).and_return(unsuccessful_verified_stub)
+
+        make_request
+      end
+
+      it 'returns 400' do
+        expect(last_response).to be_bad_request
+      end
+
+      it 'returns Desktop Not Prepared' do
+        expect(parse_last_response_body.errors.first.code).to eq('Desktop Not Prepared')
       end
     end
 
