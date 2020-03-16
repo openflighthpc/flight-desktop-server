@@ -36,7 +36,7 @@ configure do
   set :raise_errors, true
   set :show_exceptions, false
 
-  enable :cross_origin
+  enable :cross_origin if Figaro.env.cors_domain
 end
 
 not_found do
@@ -61,7 +61,8 @@ end
 # Sets the response headers
 before do
   content_type 'application/json'
-  response.headers['Access-Control-Allow-Origin'] = '*'
+
+  response.headers['Access-Control-Allow-Origin'] = Figaro.env.cors_domain if Figaro.env.cors_domain
 end
 
 class PamAuth
@@ -107,12 +108,14 @@ before do
   end
 end
 
-options "*" do
-  response.headers["Allow"] = "GET, PUT, POST, DELETE, OPTIONS"
-  response.headers["Access-Control-Allow-Methods"] = "GET, PUT, POST, DELETE, OPTIONS"
-  response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept"
-  status 200
-  ''
+if Figaro.env.cors_domain
+  options "*" do
+    response.headers["Allow"] = "GET, PUT, POST, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Methods"] = "GET, PUT, POST, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept"
+    status 200
+    ''
+  end
 end
 
 namespace '/sessions' do
