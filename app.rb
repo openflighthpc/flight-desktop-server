@@ -42,14 +42,15 @@ end
 # sets the response code
 error(HttpError) do
   e = env['sinatra.error']
-  DEFAULT_LOGGER.debug e.full_message
+  level = (e.is_a?(UnexpectedError) ? Logger::ERROR : Logger::DEBUG)
+  DEFAULT_LOGGER.add level, e.full_message
   { errors: [e] }.to_json
 end
 
 # Catches all other errors and returns a generic Internal Server Error
 error(StandardError) do
   DEFAULT_LOGGER.error env['sinatra.error'].full_message
-  { errors: [InternalServerError.new] }.to_json
+  { errors: [UnexpectedError.new] }.to_json
 end
 
 # Sets the response headers

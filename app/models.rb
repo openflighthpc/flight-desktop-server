@@ -103,7 +103,7 @@ class Session < Hashie::Trash
       cmd = SystemCommand.verify_desktop(desktop, user: user)
       cmd.raise_unless_successful
       if /already been verified\.\Z/ =~ cmd.stdout.chomp
-        raise InternalServerError
+        raise UnexpectedError
       elsif /flight desktop prepare/ =~ cmd.stdout
         raise DesktopNotPrepared
       elsif cmd.success?
