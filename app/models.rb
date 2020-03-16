@@ -144,6 +144,7 @@ class Session < Hashie::Trash
   property :ip
   property :hostname
   property :port, coerce: String
+  property :webport, coerce: String
   property :password
   property :user
 

@@ -32,6 +32,7 @@ require 'spec_helper'
 RSpec.describe '/sessions' do
   subject { raise NotImplementedError, 'the spec has not defined its subject' }
   let(:url_id) { raise NotImplementedError, 'the spec :url_id has not been set' }
+  let(:sessions) { raise NotImplementedError, 'the spec has not defined sessions' }
 
   let(:successful_find_stub) do
     SystemCommand.new(
@@ -47,12 +48,20 @@ RSpec.describe '/sessions' do
     )
   end
 
+  let(:index_multiple_stub) do
+    stdout = sessions.each_with_index.map do |s, idx|
+      "#{s.id}    #{s.desktop}   #{s.hostname} #{s.ip}     #{idx}       #{s.port}    #{s.webport}   #{s.password}        Active"
+    end.join("\n")
+    SystemCommand.new(stdout: stdout, stderr: '', code: 0)
+  end
+
   shared_examples 'sessions error when missing' do
     context 'with a stubbed missing session' do
       let(:url_id) { 'missing' }
 
       before do
         allow(SystemCommand).to receive(:find_session).and_return(exit_213_stub)
+        allow(SystemCommand).to receive(:index_sessions).and_return(exit_213_stub)
         make_request
       end
 
@@ -95,7 +104,7 @@ RSpec.describe '/sessions' do
     end
 
     context 'with multiple running sessions' do
-      subject do
+      let(:sessions) do
         [
           {
             id: '0362d58b-f29a-4b99-9a0a-277c902daa55',
@@ -103,6 +112,7 @@ RSpec.describe '/sessions' do
             hostname: 'example.com',
             ip: '10.101.0.1',
             port: 5901,
+            webport: 41301,
             password: 'GovCosh6'
           },
           {
@@ -111,6 +121,7 @@ RSpec.describe '/sessions' do
             hostname: 'example.com',
             ip: '10.101.0.2',
             port: 5902,
+            webport: 41302,
             password: 'Dinzeph3'
           },
           {
@@ -119,16 +130,10 @@ RSpec.describe '/sessions' do
             hostname: 'example.com',
             ip: '10.101.0.3',
             port: 5903,
+            webport: 41303,
             password: '5wroliv5'
           }
         ].map { |h| Session.new(**h) }
-      end
-
-      let(:index_multiple_stub) do
-        stdout = subject.each_with_index.map do |s, idx|
-          "#{s.id}    #{s.desktop}   #{s.hostname} #{s.ip}     #{idx}       #{s.port}    #{41360 + idx}   #{s.password}        Active"
-        end.join("\n")
-        SystemCommand.new(stdout: stdout, stderr: '', code: 0)
       end
 
       before do
@@ -140,8 +145,8 @@ RSpec.describe '/sessions' do
         expect(last_response).to be_ok
       end
 
-      it 'returns the subject as JSON' do
-        expect(parse_last_response_body).to eq(subject.as_json)
+      it 'returns the sessions as JSON' do
+        expect(parse_last_response_body).to eq(sessions.as_json)
       end
     end
   end
@@ -162,12 +167,40 @@ RSpec.describe '/sessions' do
           ip: '10.1.0.1',
           hostname: 'example.com',
           port: 5956,
+          webport: 41304,
           password: '97InM80d'
         )
       end
 
+      let(:other1) do
+        Session.new(
+          id: "d5255917-c8c3-4d00-bf1c-546445f8956f",
+          desktop: "gnome",
+          ip: '10.1.0.2',
+          hostname: 'example.com',
+          port: 5957,
+          webport: 41305,
+          password: 'df18bb48'
+        )
+      end
+
+      let(:other2) do
+        Session.new(
+          id: "dc17e3d0-ed68-493f-a7ec-5029310cd0f6",
+          desktop: "gnome",
+          ip: '10.1.0.3',
+          hostname: 'example.com',
+          port: 5957,
+          webport: 41306,
+          password: 'a8fd740d'
+        )
+      end
+
+      let(:sessions) { [other1, subject, other2] }
+
       before do
         allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
+        allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         make_request
       end
 
@@ -205,14 +238,18 @@ RSpec.describe '/sessions' do
           ip: '10.101.0.4',
           hostname: 'example.com',
           port: 5942,
+          webport: 41307,
           password: 'b74fbb5d'
         )
       end
+
+      let(:sessions) { [subject] }
 
       let(:url_id) { subject.id }
 
       it 'returns 404' do
         allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
+        allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         expect(Screenshot).to receive(:path).with(username, url_id)
         FakeFS.with { make_request }
@@ -228,14 +265,18 @@ RSpec.describe '/sessions' do
           ip: '10.101.0.4',
           hostname: 'example.com',
           port: 5942,
+          webport: 41308,
           password: 'b74fbb5d'
         )
       end
+
+      let(:sessions) { [subject] }
 
       let(:url_id) { subject.id }
 
       it 'returns 500' do
         allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
+        allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         allow(SystemCommand).to receive(:echo_cache_dir).and_return(exit_213_stub)
         FakeFS.with { make_request }
         expect(last_response.status).to be(500)
@@ -250,9 +291,12 @@ RSpec.describe '/sessions' do
           ip: '10.101.0.5',
           hostname: 'example.com',
           port: 5944,
+          webport: 41309,
           password: '29d20f04'
         )
       end
+
+      let(:sessions) { [subject] }
 
       let(:screenshot) do
         <<~SCREEN
@@ -272,6 +316,7 @@ RSpec.describe '/sessions' do
 
       before do
         allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
+        allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         FakeFS.with do
           path = Screenshot.path(username, subject.id)
@@ -385,6 +430,7 @@ RSpec.describe '/sessions' do
           ip: '10.1.0.2',
           hostname: 'example.com',
           port: 5905,
+          webport: 41310,
           password: 'WakofEb6'
         )
       end
@@ -522,6 +568,7 @@ RSpec.describe '/sessions' do
           ip: '10.1.0.3',
           hostname: 'example.com',
           port: 5906,
+          webport: 41311,
           password: 'ca77d490'
         )
       end
@@ -555,9 +602,12 @@ RSpec.describe '/sessions' do
         ip: '10.1.0.4',
         hostname: 'example.com',
         port: 5906,
+        webport: 41312,
         password: 'a33ff119'
       )
     end
+
+    let(:sessions) { [subject] }
 
     let(:url_id) { subject.id }
 
@@ -571,6 +621,7 @@ RSpec.describe '/sessions' do
     context 'when the kill succeeds' do
       before do
         allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
+        allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         allow(SystemCommand).to receive(:kill_session).and_return(exit_0_stub)
         make_request
       end
@@ -587,6 +638,7 @@ RSpec.describe '/sessions' do
     context 'when the kill fails' do
       before do
         allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
+        allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         allow(SystemCommand).to receive(:kill_session).and_return(exit_213_stub)
         make_request
       end
