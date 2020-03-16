@@ -8,7 +8,7 @@ The following are required to run this application:
 
 * OS:           Centos7
 * Ruby:         2.5+
-* Yum Packages: gcc, make
+* Yum Packages: gcc, make, ruby-devel, pam-devel
 
 ### Manual installation
 
