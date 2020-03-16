@@ -30,9 +30,10 @@
 require 'sinatra'
 require 'sinatra/namespace'
 
-set :show_exceptions, :after_handler
 set :bind, '0.0.0.0'
 set :dump_errors, false
+set :raise_errors, true
+set :show_exceptions, false
 
 configure do
   enable :cross_origin
