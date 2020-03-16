@@ -60,7 +60,8 @@ RSpec.describe '/sessions' do
       let(:url_id) { 'missing' }
 
       before do
-        allow(SystemCommand).to receive(:find_session).and_return(exit_213_stub)
+        # NOTE: "Temporarily" out of use
+        # allow(SystemCommand).to receive(:find_session).and_return(exit_213_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(exit_213_stub)
         make_request
       end
@@ -243,7 +244,8 @@ RSpec.describe '/sessions' do
       let(:sessions) { [other1, subject, other2] }
 
       before do
-        allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
+        # NOTE: "Temporarily" out of use
+        # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         make_request
       end
@@ -303,7 +305,8 @@ RSpec.describe '/sessions' do
       let(:url_id) { subject.id }
 
       it 'returns 404' do
-        allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
+        # NOTE: "Temporarily" out of use
+        # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         expect(Screenshot).to receive(:path).with(username, url_id)
@@ -330,7 +333,8 @@ RSpec.describe '/sessions' do
       let(:url_id) { subject.id }
 
       it 'returns 500' do
-        allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
+        # NOTE: "Temporarily" out of use
+        # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         allow(SystemCommand).to receive(:echo_cache_dir).and_return(exit_213_stub)
         FakeFS.with { make_request }
@@ -370,7 +374,8 @@ RSpec.describe '/sessions' do
       let(:url_id) { subject.id }
 
       before do
-        allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
+        # NOTE: "Temporarily" out of use
+        # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         FakeFS.with do
@@ -683,7 +688,8 @@ RSpec.describe '/sessions' do
 
     context 'when the kill succeeds' do
       before do
-        allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
+        # NOTE: "Temporarily" out of use
+        # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         allow(SystemCommand).to receive(:kill_session).and_return(exit_0_stub)
         make_request
@@ -700,7 +706,8 @@ RSpec.describe '/sessions' do
 
     context 'when the kill fails' do
       before do
-        allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
+        # NOTE: "Temporarily" out of use
+        # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         allow(SystemCommand).to receive(:kill_session).and_return(exit_213_stub)
         make_request
