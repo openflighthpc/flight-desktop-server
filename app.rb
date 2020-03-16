@@ -32,6 +32,7 @@ require 'sinatra/namespace'
 
 set :show_exceptions, :after_handler
 set :bind, '0.0.0.0'
+set :dump_errors, false
 
 configure do
   enable :cross_origin
@@ -40,11 +41,14 @@ end
 # Converts HttpError objects into their JSON representation. Each object already
 # sets the response code
 error(HttpError) do
-  { errors: [env['sinatra.error']] }.to_json
+  e = env['sinatra.error']
+  DEFAULT_LOGGER.debug e.full_message
+  { errors: [e] }.to_json
 end
 
 # Catches all other errors and returns a generic Internal Server Error
 error(StandardError) do
+  DEFAULT_LOGGER.error env['sinatra.error'].full_message
   { errors: [InternalServerError.new] }.to_json
 end
 
