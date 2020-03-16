@@ -43,6 +43,7 @@ class Session < Hashie::Trash
           hostname: parts[2],
           ip: parts[3],
           port: parts[5],
+          webport: parts[6],
           password: parts[7],
           user: user
         )
@@ -52,11 +53,25 @@ class Session < Hashie::Trash
     end
   end
 
+  # NOTE: This is a "temporary" method which will find a session using the index
+  # command. This work around is required b/c indexing returns the webport but
+  # the find command does not.
+  #
+  # Remove this when it becomes obsolete
+  def self.find_by_indexing(id, user:)
+    sessions = index(user: user)
+    sessions.find { |s| s.id == id }
+  end
+
   # NOTE: The flight desktop command generates a UUID for each session, however
   # it also allows accepts shortened versions. This means their is some "fuzziness"
   # in the ID.
   #
   # Revists as necessary, we may want to disable this
+  #
+  # NOTE: GOTCHA
+  # This method does not return the websockify port. It is being maintained for
+  # prosperity
   def self.find_by_fuzzy_id(fuzzy_id, user:)
     cmd = SystemCommand.find_session(fuzzy_id, user: user)
     return nil unless cmd.code == 0
@@ -158,7 +173,7 @@ class Session < Hashie::Trash
       'desktop' => desktop,
       'ip' => ip,
       'hostname' => hostname,
-      'port' => port,
+      'port' => webport,
       'password' => password
     }
   end

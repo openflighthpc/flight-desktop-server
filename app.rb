@@ -121,7 +121,7 @@ namespace '/sessions' do
       end
 
       def current_session
-        Session.find_by_fuzzy_id(id_param, user: current_user).tap do |s|
+        Session.find_by_indexing(id_param, user: current_user).tap do |s|
           next if s
           raise NotFound.new(type: 'session', id: id_param)
         end
