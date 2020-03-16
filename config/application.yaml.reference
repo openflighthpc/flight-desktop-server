@@ -12,6 +12,13 @@
 # =============================================================================
 
 # =============================================================================
+# Pam Configuration Name
+# Specify which pam configuration file should be used to authenticate requests.
+# It should correlate to a filename stored within /etc/pam.d
+# =============================================================================
+pam_conf:
+
+# =============================================================================
 # Log Level
 # Specify which level of logging should be used. The supported values are:
 # fatal, error, warn, info, or debug

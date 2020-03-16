@@ -14,7 +14,8 @@
 # ==============================================================================
 
 # STATIC DEFAULTS:
-log_level: info
+log_level:  info
+pam_conf:   sshd
 
 development:
   log_level: debug

@@ -40,5 +40,5 @@ Figaro.load
 ENV['app_root_dir'] = File.expand_path('../..', __dir__)
 
 # Enforce the generally required keys
-Figaro.require_keys('log_level')
+Figaro.require_keys('log_level', 'pam_conf')
 

@@ -45,7 +45,7 @@ end
 
 class PamAuth
   def self.valid?(username, password)
-    Rpam.auth(username, password, service: 'login')
+    Rpam.auth(username, password, service: Figaro.env.pam_conf!)
   end
 end
 
