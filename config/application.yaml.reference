@@ -1,0 +1,26 @@
+# =============================================================================
+# Reference Documentation
+# This document contains the key descriptions for:
+# config/application.yaml
+#
+# This application is configured using `Figaro`. Refer to the documentation
+# for further details:
+# https://github.com/laserlemon/figaro
+#
+# This document is for reference purposes only, setting values here will not
+# configure the application.
+# =============================================================================
+
+# =============================================================================
+# Pam Configuration Name
+# Specify which pam configuration file should be used to authenticate requests.
+# It should correlate to a filename stored within /etc/pam.d
+# =============================================================================
+pam_conf:
+
+# =============================================================================
+# Log Level
+# Specify which level of logging should be used. The supported values are:
+# fatal, error, warn, info, or debug
+# =============================================================================
+log_level:

@@ -79,7 +79,6 @@ a clean environment as the user identified in the `Authorization` header.
 
 The representation for each session must include at a minimum its `id`
 and `type`.
-
 *id*
 
 The identifier for the session as determined by `flight desktop`.
@@ -158,7 +157,7 @@ Content-Type: application/json
 {
   "errors": [{
     "status": "400",
-    "code": "Unknown Desktop Type"
+    "code": "Unknown Desktop"
   }]
 }
 ```
@@ -365,6 +364,24 @@ specification](https://jsonapi.org/format/#errors).  In particular, the `code`
 key should be included for all errors.  The particular code to use is detailed
 in this document.
 
+All POST/PATCH/PUT/DELETE requests must formatted as JSON. This includes
+setting the `Content-Type` header to `application/json`. Failure to do so will
+raise the following error.
+
+Example
+
+```
+HTTP/2 415 Unsupported Media Type
+Content-Type: application/json
+
+{
+  "errors": [{
+    "status": "415",
+    "code": "Unsupported Media Type"
+  }]
+}
+```
+
 If the given user cannot be found in `/etc/passwd`, a "User Not Found" error
 should be reported.
 
@@ -372,6 +389,7 @@ Example
 
 ```
 HTTP/2 404 Not Found
+Content-Type: application/json
 
 {
   "errors": [{
@@ -388,6 +406,7 @@ Example
 
 ```
 HTTP/2 422 Unprocessable Entity
+Content-Type: application/json
 
 {
   "errors": [{
@@ -400,7 +419,6 @@ HTTP/2 422 Unprocessable Entity
 XXX We should consider if distinguishing "User Not Found" from "User Not
 Available" exposes the configured users of the cluster and if this is
 something we wish to avoid.
-
 
 If communication with `flight desktop` fails in an unexpected way return a 500
 error.
