@@ -28,11 +28,29 @@
 #===============================================================================
 
 begin
-  _user = ARGV.first
+  # Extracts the user and command from the ruby ARGV
+  user = ARGV.first
   argv = ARGV[1..-1]
-  Bundler.with_clean_env do
-    exec(*argv)
-  end
+
+  # Sets up the process with the user
+  user_data = Etc.getpwnam(user)
+  Process::Sys.setgid(user_data.gid)
+  Process::Sys.setuid(user)
+  Process.setsid
+
+  # Sets up the environment for the user
+  env = {
+    'HOME' => user_data.dir,
+    'USER' => user,
+    'PATH' => ENV['PATH'],
+    'TERM' => 'vt100'
+  }
+
+  # Executes the command
+  exec(env, *argv, unsetenv_others: true)
+rescue => e
+  # Print any ruby errors to STDERR
+  $stderr.puts e.message
 ensure
   # This line should never be reached as the process should be replaced with exec
   exit 213
