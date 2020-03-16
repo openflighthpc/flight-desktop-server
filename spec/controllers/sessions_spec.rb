@@ -33,7 +33,7 @@ RSpec.describe '/sessions' do
   subject { raise NotImplementedError, 'the spec has not defined its subject' }
   let(:url_id) { raise NotImplementedError, 'the spec :url_id has not been set' }
 
-  let(:exit_1_stub) { SystemCommand.new(code: 1) }
+  let(:exit_213_stub) { SystemCommand.new(code: 213) }
   let(:exit_0_stub) { SystemCommand.new(code: 0) }
 
   let(:successful_find_stub) do
@@ -55,7 +55,7 @@ RSpec.describe '/sessions' do
       let(:url_id) { 'missing' }
 
       before do
-        allow(SystemCommand).to receive(:find_session).and_return(exit_1_stub)
+        allow(SystemCommand).to receive(:find_session).and_return(exit_213_stub)
         make_request
       end
 
@@ -88,7 +88,7 @@ RSpec.describe '/sessions' do
 
     context 'when the index system command fails' do
       before do
-        allow(SystemCommand).to receive(:index_sessions).and_return(exit_1_stub)
+        allow(SystemCommand).to receive(:index_sessions).and_return(exit_213_stub)
         make_request
       end
 
@@ -239,7 +239,7 @@ RSpec.describe '/sessions' do
 
       it 'returns 500' do
         allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
-        allow(SystemCommand).to receive(:echo_cache_dir).and_return(exit_1_stub)
+        allow(SystemCommand).to receive(:echo_cache_dir).and_return(exit_213_stub)
         FakeFS.with { make_request }
         expect(last_response.status).to be(500)
       end
@@ -428,7 +428,7 @@ RSpec.describe '/sessions' do
 
       before do
         allow(SystemCommand).to receive(:start_session).and_return(unverified_create_stub)
-        expect(SystemCommand).to receive(:verify_desktop).and_return(exit_1_stub)
+        expect(SystemCommand).to receive(:verify_desktop).and_return(exit_213_stub)
 
         make_request
       end
@@ -590,7 +590,7 @@ RSpec.describe '/sessions' do
     context 'when the kill fails' do
       before do
         allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
-        allow(SystemCommand).to receive(:kill_session).and_return(exit_1_stub)
+        allow(SystemCommand).to receive(:kill_session).and_return(exit_213_stub)
         make_request
       end
 
