@@ -78,7 +78,7 @@ class SystemCommand < Hashie::Dash
   # echo_cache_dir MUST NOT take any inputs. It is executing through a shell and therefore
   # it is possible to preform an injection attack
   def self.echo_cache_dir(user:)
-    Builder.new("bash -c").call('echo ${XDG_CACHE_HOME:-$HOME/.cache}', user: user)
+    Builder.new("ruby -e").call('puts File.join(ENV["HOME"], ".cache")', user: user)
   end
 
   def self.index_sessions(user:)
