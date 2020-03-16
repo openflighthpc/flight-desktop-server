@@ -31,6 +31,11 @@ require 'sinatra'
 require 'sinatra/namespace'
 
 set :show_exceptions, :after_handler
+set :bind, '0.0.0.0'
+
+configure do
+  enable :cross_origin
+end
 
 # Converts HttpError objects into their JSON representation. Each object already
 # sets the response code
@@ -43,9 +48,10 @@ error(StandardError) do
   { errors: [InternalServerError.new] }.to_json
 end
 
-# Sets the response Content-Type
+# Sets the response headers
 before do
   content_type 'application/json'
+  response.headers['Access-Control-Allow-Origin'] = '*'
 end
 
 class PamAuth
@@ -91,9 +97,11 @@ before do
   end
 end
 
-# Sets the response Content-Type
-before do
-  content_type 'application/json'
+options "*" do
+  response.headers["Allow"] = "GET, PUT, POST, DELETE, OPTIONS"
+  response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept"
+  status 200
+  ''
 end
 
 namespace '/sessions' do

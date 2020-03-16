@@ -40,6 +40,7 @@ gem 'rake'
 gem 'rpam-ruby19', require: 'rpam'
 gem 'sinatra'
 gem 'sinatra-namespace'
+gem 'sinatra-cross_origin'
 
 group :development, :test do
   group :pry do
