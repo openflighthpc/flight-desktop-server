@@ -43,15 +43,15 @@ error(StandardError) do
   { errors: [InternalServerError.new] }.to_json
 end
 
+# Sets the response Content-Type
+before do
+  content_type 'application/json'
+end
+
 class PamAuth
   def self.valid?(username, password)
     Rpam.auth(username, password, service: Figaro.env.pam_conf!)
   end
-end
-
-# Sets the response Content-Type
-before do
-  content_type 'application/json'
 end
 
 helpers do
@@ -60,6 +60,7 @@ end
 
 # Validates the user's credentials from the authorization header
 before do
+  next if env['REQUEST_METHOD'] == 'OPTIONS'
   parts = (env['HTTP_AUTHORIZATION'] || '').chomp.split(' ')
   raise Unauthorized unless parts.length == 2 && parts.first == 'Basic'
   username, password = Base64.decode64(parts.last).split(':', 2)
@@ -73,7 +74,7 @@ end
 # Adapted from:
 # https://raw.githubusercontent.com/rack/rack-contrib/master/lib/rack/contrib/post_body_content_type_parser.rb
 before do
-  next if ['GET', 'DELETE'].include? env['REQUEST_METHOD']
+  next if ['GET', 'HEAD', 'OPTIONS', 'DELETE'].include? env['REQUEST_METHOD']
   if env['CONTENT_TYPE'] == 'application/json'
     begin
       io = env['rack.input']
