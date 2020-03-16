@@ -35,17 +35,19 @@ class SystemCommand < Hashie::Dash
   class Builder
     attr_reader :base_argv
 
+    def self.bootstrap_path
+      @bootstrap_path ||= File.join(Figaro.env.app_root_dir!, 'libexec/execute-as-user.rb')
+    end
+
     def initialize(cmd)
       @base_argv ||= cmd.split("\s")
     end
 
-    # TODO: Correctly setup the environment with the user
-    # NOTE: The Bundler.with_clean_env may not be required once the env is setup correctly
-    def call(*argv, user:)
-      Bundler.with_clean_env do
-        stdout, stderr, status = Open3.capture3(*base_argv, *argv)
-        return SystemCommand.new(stdout: stdout, stderr: stderr, code: status.exitstatus)
-      end
+    # The bootstrapping script is responsible for setting up the user environment
+    def call(*cmd_argv, user:)
+      argv = [self.class.bootstrap_path, user, *base_argv, *cmd_argv]
+      stdout, stderr, status = Open3.capture3(*argv)
+      SystemCommand.new(stdout: stdout, stderr: stderr, code: status.exitstatus)
     end
   end
 
