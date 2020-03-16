@@ -30,13 +30,17 @@
 require 'sinatra'
 require 'sinatra/namespace'
 
-set :bind, '0.0.0.0'
-set :dump_errors, false
-set :raise_errors, true
-set :show_exceptions, false
-
 configure do
+  set :bind, '0.0.0.0'
+  set :dump_errors, false
+  set :raise_errors, true
+  set :show_exceptions, false
+
   enable :cross_origin
+end
+
+not_found do
+  { errors: [NotFound.new] }.to_json
 end
 
 # Converts HttpError objects into their JSON representation. Each object already
