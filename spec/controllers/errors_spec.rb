@@ -99,7 +99,6 @@ RSpec.describe 'Error Handling' do
 
     def expect_internal_server_error
       error = parse_last_response_body.errors.first
-      expect(error.code).to eq('Internal Server Error')
       expect(error.status).to eq(last_response.status.to_s)
       expect(error.status).to eq('500')
       expect(error.keys).not_to include('details')

@@ -31,16 +31,32 @@ require 'sinatra'
 require 'sinatra/namespace'
 
 set :show_exceptions, :after_handler
+set :bind, '0.0.0.0'
+set :dump_errors, false
+
+configure do
+  enable :cross_origin
+end
 
 # Converts HttpError objects into their JSON representation. Each object already
 # sets the response code
 error(HttpError) do
-  { errors: [env['sinatra.error']] }.to_json
+  e = env['sinatra.error']
+  level = (e.is_a?(UnexpectedError) ? Logger::ERROR : Logger::DEBUG)
+  DEFAULT_LOGGER.add level, e.full_message
+  { errors: [e] }.to_json
 end
 
 # Catches all other errors and returns a generic Internal Server Error
 error(StandardError) do
-  { errors: [InternalServerError.new] }.to_json
+  DEFAULT_LOGGER.error env['sinatra.error'].full_message
+  { errors: [UnexpectedError.new] }.to_json
+end
+
+# Sets the response headers
+before do
+  content_type 'application/json'
+  response.headers['Access-Control-Allow-Origin'] = '*'
 end
 
 class PamAuth
@@ -49,17 +65,13 @@ class PamAuth
   end
 end
 
-# Sets the response Content-Type
-before do
-  content_type 'application/json'
-end
-
 helpers do
   attr_accessor :current_user
 end
 
 # Validates the user's credentials from the authorization header
 before do
+  next if env['REQUEST_METHOD'] == 'OPTIONS'
   parts = (env['HTTP_AUTHORIZATION'] || '').chomp.split(' ')
   raise Unauthorized unless parts.length == 2 && parts.first == 'Basic'
   username, password = Base64.decode64(parts.last).split(':', 2)
@@ -73,7 +85,7 @@ end
 # Adapted from:
 # https://raw.githubusercontent.com/rack/rack-contrib/master/lib/rack/contrib/post_body_content_type_parser.rb
 before do
-  next if ['GET', 'DELETE'].include? env['REQUEST_METHOD']
+  next if ['GET', 'HEAD', 'OPTIONS', 'DELETE'].include? env['REQUEST_METHOD']
   if env['CONTENT_TYPE'] == 'application/json'
     begin
       io = env['rack.input']
@@ -90,9 +102,11 @@ before do
   end
 end
 
-# Sets the response Content-Type
-before do
-  content_type 'application/json'
+options "*" do
+  response.headers["Allow"] = "GET, PUT, POST, DELETE, OPTIONS"
+  response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept"
+  status 200
+  ''
 end
 
 namespace '/sessions' do
@@ -121,7 +135,7 @@ namespace '/sessions' do
       end
 
       def current_session
-        Session.find_by_fuzzy_id(id_param, user: current_user).tap do |s|
+        Session.find_by_indexing(id_param, user: current_user).tap do |s|
           next if s
           raise NotFound.new(type: 'session', id: id_param)
         end

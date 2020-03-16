@@ -70,6 +70,7 @@ GEM
       rack-protection (= 2.0.8.1)
       sinatra (= 2.0.8.1)
       tilt (~> 2.0)
+    sinatra-cross_origin (0.4.0)
     sinatra-namespace (1.0)
       sinatra-contrib
     thor (0.20.3)
@@ -97,6 +98,7 @@ DEPENDENCIES
   rspec
   rspec-collection_matchers
   sinatra
+  sinatra-cross_origin
   sinatra-namespace
 
 BUNDLED WITH

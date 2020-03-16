@@ -1,5 +1,5 @@
+#!/usr/bin/env ruby
 # frozen_string_literal: true
-
 #==============================================================================
 # Copyright (C) 2020-present Alces Flight Ltd.
 #
@@ -27,32 +27,32 @@
 # https://github.com/openflighthpc/flight-desktop-server
 #===============================================================================
 
-source "https://rubygems.org"
+begin
+  # Extracts the user and command from the ruby ARGV
+  user = ARGV.first
+  argv = ARGV[1..-1]
 
-git_source(:github) { |repo_name| "https://github.com/#{repo_name}" }
+  # Sets up the process with the user
+  user_data = Etc.getpwnam(user)
+  Process::Sys.setgid(user_data.gid)
+  Process::Sys.setuid(user)
+  Process.setsid
 
-gem 'activesupport', require: 'active_support/all'
-gem 'faraday'
-gem 'figaro'
-gem 'hashie'
-gem 'puma'
-gem 'rake'
-gem 'rpam-ruby19', require: 'rpam'
-gem 'sinatra'
-gem 'sinatra-namespace'
-gem 'sinatra-cross_origin'
+  # Sets up the environment for the user
+  env = {
+    'HOME' => user_data.dir,
+    'USER' => user,
+    'PATH' => ENV['PATH'],
+    'TERM' => 'vt100'
+  }
 
-group :development, :test do
-  group :pry do
-    gem 'pry'
-    gem 'pry-byebug'
-  end
-end
-
-group :test do
-  gem 'fakefs', require: 'fakefs/safe'
-  gem 'rack-test'
-  gem 'rspec'
-  gem 'rspec-collection_matchers'
+  # Executes the command
+  exec(env, *argv, unsetenv_others: true)
+rescue => e
+  # Print any ruby errors to STDERR
+  $stderr.puts e.message
+ensure
+  # This line should never be reached as the process should be replaced with exec
+  exit 213
 end
 
