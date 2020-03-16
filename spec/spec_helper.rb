@@ -41,8 +41,11 @@ module RSpecSinatraMixin
   end
 end
 
-module SharedUsernameAndPassword
+module SharedSpecContext
   extend RSpec::SharedContext
+
+  let(:exit_213_stub) { SystemCommand.new(code: 213) }
+  let(:exit_0_stub) { SystemCommand.new(code: 0) }
 
   let(:username) { 'default-test-user' }
   let(:password) { 'default-test-password' }
@@ -53,7 +56,7 @@ RSpec.configure do |c|
 	c.include RSpecSinatraMixin
 
   # Include the username and password
-  c.include SharedUsernameAndPassword
+  c.include SharedSpecContext
 
   def parse_last_request_body
     json = JSON.parse(last_request.body)

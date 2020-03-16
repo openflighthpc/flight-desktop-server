@@ -33,9 +33,6 @@ RSpec.describe '/sessions' do
   subject { raise NotImplementedError, 'the spec has not defined its subject' }
   let(:url_id) { raise NotImplementedError, 'the spec :url_id has not been set' }
 
-  let(:exit_213_stub) { SystemCommand.new(code: 213) }
-  let(:exit_0_stub) { SystemCommand.new(code: 0) }
-
   let(:successful_find_stub) do
     SystemCommand.new(
       stderr: '', code: 0, stdout: <<~STDOUT
