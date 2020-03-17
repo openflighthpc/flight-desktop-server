@@ -12,6 +12,13 @@
 # =============================================================================
 
 # =============================================================================
+# CORS Domain
+# Enable cross origin resource sharing from the given domain. CORS is disabled
+# by default
+# =============================================================================
+cors_domain:
+
+# =============================================================================
 # Pam Configuration Name
 # Specify which pam configuration file should be used to authenticate requests.
 # It should correlate to a filename stored within /etc/pam.d

@@ -30,12 +30,17 @@
 require 'sinatra'
 require 'sinatra/namespace'
 
-set :show_exceptions, :after_handler
-set :bind, '0.0.0.0'
-set :dump_errors, false
-
 configure do
-  enable :cross_origin
+  set :bind, '0.0.0.0'
+  set :dump_errors, false
+  set :raise_errors, true
+  set :show_exceptions, false
+
+  enable :cross_origin if Figaro.env.cors_domain
+end
+
+not_found do
+  { errors: [NotFound.new] }.to_json
 end
 
 # Converts HttpError objects into their JSON representation. Each object already
@@ -56,7 +61,8 @@ end
 # Sets the response headers
 before do
   content_type 'application/json'
-  response.headers['Access-Control-Allow-Origin'] = '*'
+
+  response.headers['Access-Control-Allow-Origin'] = Figaro.env.cors_domain if Figaro.env.cors_domain
 end
 
 class PamAuth
@@ -102,11 +108,14 @@ before do
   end
 end
 
-options "*" do
-  response.headers["Allow"] = "GET, PUT, POST, DELETE, OPTIONS"
-  response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept"
-  status 200
-  ''
+if Figaro.env.cors_domain
+  options "*" do
+    response.headers["Allow"] = "GET, PUT, POST, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Methods"] = "GET, PUT, POST, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept"
+    status 200
+    ''
+  end
 end
 
 namespace '/sessions' do
