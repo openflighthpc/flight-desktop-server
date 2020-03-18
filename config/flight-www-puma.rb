@@ -27,13 +27,13 @@
 # https://github.com/openflighthpc/flight-desktop-server
 #===============================================================================
 
-var_dir = '/opt/flight/var/desktop-api'
+var_dir = '/opt/flight/var/flight-desktop-server'
 FileUtils.mkdir_p var_dir
 
 pidfile File.join(var_dir, 'puma.pid')
 
 # Redirect stdout and stderr
-log = '/opt/flight/var/log/desktop-api.log'
+log = '/opt/flight/var/log/flight-desktop-server.log'
 stdout_redirect log, log, true
 
 # Run the app over a unix socket
