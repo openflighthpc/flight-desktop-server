@@ -118,6 +118,13 @@ if Figaro.env.cors_domain
   end
 end
 
+namespace '/ping' do
+  get do
+    status 200
+    'OK'
+  end
+end
+
 namespace '/sessions' do
   helpers do
     def desktop_param
