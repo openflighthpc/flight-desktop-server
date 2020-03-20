@@ -120,6 +120,7 @@ end
 
 namespace '/ping' do
   get do
+    content_type 'text/plain'
     status 200
     'OK'
   end
