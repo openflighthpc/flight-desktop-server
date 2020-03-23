@@ -137,7 +137,7 @@ namespace '/sessions' do
   end
 
   get do
-    Session.index(user: current_user).to_json
+    { 'data' => Session.index(user: current_user) }.to_json
   end
 
   post do
