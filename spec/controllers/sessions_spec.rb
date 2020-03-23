@@ -133,7 +133,7 @@ RSpec.describe '/sessions' do
       end
 
       it 'returns an empty array' do
-        expect(parse_last_response_body).to eq([])
+        expect(parse_last_response_body.data).to eq([])
       end
     end
 
@@ -191,7 +191,7 @@ RSpec.describe '/sessions' do
       end
 
       it 'returns the sessions as JSON' do
-        expect(parse_last_response_body).to eq(sessions.as_json)
+        expect(parse_last_response_body.data).to eq(sessions.as_json)
       end
     end
   end
