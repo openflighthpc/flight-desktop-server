@@ -425,13 +425,13 @@ RSpec.describe '/sessions' do
 
     let(:unknown_create_stub) do
       SystemCommand.new(
-        code: 1, stdout: '', stderr: "flight desktop: unknown desktop type: #{desktop}"
+        code: 1, stdout: '', stderr: "flight desktop: unknown desktop type: #{desktop}\n"
       )
     end
 
     let(:unverified_create_stub) do
       SystemCommand.new(
-        code: 1, stdout: '', stderr: "flight desktop: Desktop type '#{desktop}' has not been verified"
+        code: 1, stdout: '', stderr: "flight desktop: Desktop type '#{desktop}' has not been verified\n"
       )
     end
 
