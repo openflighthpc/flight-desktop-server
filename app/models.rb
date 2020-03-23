@@ -84,7 +84,7 @@ class Session < Hashie::Trash
 
     def call
       cmd = start
-      if /verified\z/ =~ cmd.stderr
+      if /verified\Z/ =~ cmd.stderr
         verify
         cmd = start
       end
