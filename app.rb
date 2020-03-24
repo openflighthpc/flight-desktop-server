@@ -81,6 +81,7 @@ before do
   parts = (env['HTTP_AUTHORIZATION'] || '').chomp.split(' ')
   raise Unauthorized unless parts.length == 2 && parts.first == 'Basic'
   username, password = Base64.decode64(parts.last).split(':', 2)
+  raise RootForbidden if username == 'root'
   raise Unauthorized unless username && password
   raise Unauthorized unless PamAuth.valid?(username, password)
   self.current_user = username

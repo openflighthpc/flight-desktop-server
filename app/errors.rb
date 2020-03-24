@@ -99,3 +99,9 @@ class Unauthorized < HttpError
   self.default_http_status = 401
 end
 
+class Forbidden < HttpError
+  self.default_http_status = 403
+end
+
+class RootForbidden < Forbidden; end
+

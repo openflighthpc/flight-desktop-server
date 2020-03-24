@@ -91,6 +91,33 @@ RSpec.describe 'Error Handling' do
     include_examples 'returns 401'
   end
 
+  context 'with valid root crendentials' do
+    let(:username) { 'root' }
+
+    before do
+      standard_get_headers
+      get '/test-error-handling'
+    end
+
+    it 'returns 403' do
+      expect(last_response).to be_forbidden
+    end
+  end
+
+  context 'with invalid root crendentials' do
+    let(:username) { 'root' }
+
+    before do
+      standard_get_headers
+      allow(PamAuth).to receive(:valid?).and_return(true)
+      get '/test-error-handling'
+    end
+
+    it 'returns 403' do
+      expect(last_response).to be_forbidden
+    end
+  end
+
   describe 'GET' do
     def get_test_error_page
       standard_get_headers
