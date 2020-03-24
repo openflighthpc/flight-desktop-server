@@ -67,13 +67,13 @@ Content-Type: application/json
 
 ### ID
 
-The `id` for a `sessions` MUST be conform to the `UUID` format according to [RFC4122](https://tools.ietf.org/html/rfc4122#section-3).
+The `id` for a `sessions` MUST conform to the `UUID` format according to [RFC4122](https://tools.ietf.org/html/rfc4122#section-3).
 
-*BUG NOTICE:* There is a known issue where the first "portion" of the UUID can be used to as a `id`. Its behaviour is undetermined and SHALL be removed in future releases. The full UUID MUST always be used as the `id`.
+*BUG NOTICE:* There is a known issue where the first "portion" of the UUID can be used as an `id`. Its behaviour is undetermined and SHALL be removed in future releases. The full UUID MUST always be used as the `id`.
 
 ### GET Index
 
-Return a list of all currently running desktop sessions for the identified user. It the `data` attribute MAY be empty.
+Return a list of all currently running desktop sessions for the identified user. The `data` attribute MAY be empty.
 
 ```
 GET /sessions
@@ -162,7 +162,7 @@ Content-Type: application/json
 
 Start a new vnc session with the given `desktop` type.
 
-*BUG NOTICE*: The `port` is not currently being returned by the request due to internal limitations. Until such time this bug is fixed, the port SHOULD be determined using a standard `GET Show` request.
+*BUG NOTICE*: The `port` is not currently being returned by the request due to internal limitations. Until such time as this bug is fixed, the port SHOULD be determined using a standard `GET Show` request.
 
 ```
 POST /sessions
