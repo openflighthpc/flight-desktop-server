@@ -21,8 +21,7 @@ Content-Type: application/json
 
 The `Authorization` header is a base64 encoded `<username>:<password>` tuple. The `username` and `password` SHOULD match the underlining system according to the [pam sshd config](https://www.pks.mpg.de/~mueller/docs/suse10.1/suselinux-manual_en/manual/sec.pam.struc.format.html). This MAY be changed to any other `pam` config.
 
-The following error SHALL be returned if the `pam` authorization check fails:
-NOTE: `403 Forbidden` is not currently used, but maybe added in the future.
+The following error SHALL be returned if the `pam` authentication check fails:
 
 ```
 HTTP/2 401 Unauthorized
@@ -31,6 +30,20 @@ HTTP/2 401 Unauthorized
     {
       "status": "401",
       "code": "Unauthorized"
+    }
+  ]
+}
+```
+
+Commands can not be executed as `root` to mitigate against security issues. The following error will be raised when attempting to preform any action as `root`:
+
+```
+HTTP/2 403 Forbidden
+{
+  "errors": [
+    {
+      "status": "403",
+      "code": "Root Forbidden"
     }
   ]
 }
@@ -50,32 +63,13 @@ Content-Type: application/json
 }
 ```
 
-#### WIP Common errors
-
-If the given user is `root` or if creating a process as the given user fails,
-a "User Not Available" error should be reported.
-
-Example
-
-```
-HTTP/2 422 Unprocessable Entity
-Content-Type: application/json
-
-{
-  "errors": [{
-    "status": "422",
-    "code": "User Not Available"
-  }]
-}
-```
-
 ## Sessions
 
 ### ID
 
 The `id` for a `sessions` MUST be conform to the `UUID` format according to [RFC4122](https://tools.ietf.org/html/rfc4122#section-3).
 
-*BUG NOTICE:* Their is a known issue where the first "portion" of the UUID can be used to as a `id`. Its behaviour is undetermined and SHALL be removed in future releases. The full UUID MUST always be used as the `id`.
+*BUG NOTICE:* There is a known issue where the first "portion" of the UUID can be used to as a `id`. Its behaviour is undetermined and SHALL be removed in future releases. The full UUID MUST always be used as the `id`.
 
 ### GET Index
 
