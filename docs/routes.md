@@ -225,6 +225,36 @@ Accepts: application/json
 HTTP/2 204 No Content
 ```
 
+### GET Screenshot [OLD - Deprecated]
+
+This is the old route that returns the screenshot associated with a session. In returns the screenshot as a base64 encoded `png`.
+
+It is RECOMMENDED the screenshot is retrieved with the new route described below as it avoids base64 encoding the image.
+
+```
+GET /sessions/:id/screenshot
+Authorization: Basic <base64 encoded username:password>
+Accepts: image/png;base64
+
+HTTP/2 200 OK
+Content-Type: image/png;base64
+... Base64 Encoded Image ...
+```
+
+### GET Screenshot [NEW - Recommended]
+
+Retrieve the screenshot associated with a session as `image/png`. This route can be directly embedded into a `src` tag.
+
+```
+GET /sessions/:id/screenshot.png
+Authorization: Basic <base64 encoded username:password>
+Accepts: image/png
+
+HTTP/2 200 OK
+Content-Type: image/png
+... Image ...
+```
+
 # Copyright and License
 
 Eclipse Public License 2.0, see LICENSE.txt for details.

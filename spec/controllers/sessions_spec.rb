@@ -275,10 +275,10 @@ RSpec.describe '/sessions' do
     end
   end
 
-  describe 'GET /sessions/:id/screenshot' do
+  describe 'GET /sessions/:id/screenshot.png' do
     def make_request
       standard_get_headers
-      get "/sessions/#{url_id}/screenshot"
+      get "/sessions/#{url_id}/screenshot.png"
     end
 
     let(:successful_cache_dir_stub) do
@@ -359,16 +359,11 @@ RSpec.describe '/sessions' do
 
       let(:screenshot) do
         <<~SCREEN
-          A `bunch`, of "random" characters! They should be base64 encoded? &&**?><>}{[]££""''
+          A `bunch`, of "random" characters! &&**?><>}{[]££""''
           ++**--!!"!£"$^£&"£$£"$%$&**()()?<>~@:{}@~}{@{{P
 
-          On further inspection, the random characters aren't required as the base64 is
-          encodes base on 6-bits not 8. ¯\_(ツ)_/¯
+          ¯\_(ツ)_/¯
         SCREEN
-      end
-
-      let(:screenshot_base64) do
-        Base64.encode64(screenshot)
       end
 
       let(:url_id) { subject.id }
@@ -394,8 +389,8 @@ RSpec.describe '/sessions' do
         expect(last_response.headers['Content-Type']).to eq('image/png')
       end
 
-      it 'responds with the base64 encoded image' do
-        expect(last_response.body).to eq(screenshot_base64)
+      it 'responds with the image' do
+        expect(last_response.body).to eq(screenshot)
       end
     end
   end
