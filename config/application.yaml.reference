@@ -12,21 +12,33 @@
 # =============================================================================
 
 # =============================================================================
-# CORS Domain
-# Enable cross origin resource sharing from the given domain. CORS is disabled
-# by default
-# =============================================================================
-cors_domain:
-
-# =============================================================================
-# Pam Configuration Name
+# Pam Configuration Name [DEFAULT]
 # Specify which pam configuration file should be used to authenticate requests.
 # It should correlate to a filename stored within /etc/pam.d
 # =============================================================================
 pam_conf:
 
 # =============================================================================
-# Log Level
+# Vaild Desktop Types [OPTIONAL]
+# Override the list of valid desktop types. This variable is automatically set
+# by interrogating the underlining `desktop` CLI when the application loads.
+# The types must form a comma separated list.
+#
+# Setting this variable manually can be used to disable specific desktop types.
+# WARNING: Setting a deskstop type that does exists in the underlining CLI will
+#          lead to an undetermined error.
+# =============================================================================
+desktop_types:
+
+# =============================================================================
+# CORS Domain [OPTIONAL]
+# Enable cross origin resource sharing from the given domain. CORS is disabled
+# by default
+# =============================================================================
+cors_domain:
+
+# =============================================================================
+# Log Level [DEFAULT]
 # Specify which level of logging should be used. The supported values are:
 # fatal, error, warn, info, or debug
 # =============================================================================
