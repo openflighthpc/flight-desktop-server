@@ -27,6 +27,7 @@
 # https://github.com/openflighthpc/flight-desktop-server
 #===============================================================================
 
+# Loads the available desktops from either the CLI or the environment
 desktops =  if Figaro.env.desktop_types
               Figaro.env.desktop_types.split(',')
             else
@@ -34,9 +35,14 @@ desktops =  if Figaro.env.desktop_types
               cmd.raise_unless_successful
               cmd.stdout.each_line.map { |l| l.split(' ').first }
             end
+models = desktops.map { |n| Desktop.new(name: n) }
 
-models = desktops.map do |name|
-  Desktop.new(name: name).tap { |d| d.verify_desktop(user: Figaro.env.USER!) }
+# Verifies the desktops for the list command
+Thread.new do
+  Parallel.each(models, in_threads: models.length) do |desktop|
+    desktop.verify_desktop(user: Figaro.env.USER!)
+  end
 end
+
 Desktop.instance_variable_set(:"@index", models)
 

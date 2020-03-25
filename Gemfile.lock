@@ -27,6 +27,7 @@ GEM
     mustermann (1.1.1)
       ruby2_keywords (~> 0.0.1)
     nio4r (2.5.2)
+    parallel (1.19.1)
     pry (0.12.2)
       coderay (~> 1.1.0)
       method_source (~> 0.9.0)
@@ -89,6 +90,7 @@ DEPENDENCIES
   faraday
   figaro
   hashie
+  parallel
   pry
   pry-byebug
   puma
