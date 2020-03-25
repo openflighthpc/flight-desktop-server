@@ -53,6 +53,7 @@ task require: :require_bundler do
   require 'app/system_command'
   require 'app/errors'
   require 'app/models'
+  require 'config/initializers/desktop_types'
   require 'app'
 end
 

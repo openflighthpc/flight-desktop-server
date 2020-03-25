@@ -27,20 +27,14 @@
 # https://github.com/openflighthpc/flight-desktop-server
 #===============================================================================
 
-# Loads the configurations into the environment
-Figaro.application = Figaro::Application.new(
-  environment: (ENV['RACK_ENV'] || 'development').to_sym,
-  path: File.expand_path('../application.yaml', __dir__)
-)
-Figaro.load
-      .reject { |_, v| v.nil? }
-      .each { |key, value| ENV[key] ||= value.to_s }
+desktops =  if Figaro.env.desktop_types
+              Figaro.env.desktop_types.split(',')
+            else
+              cmd = SystemCommand.avail_desktops(user: Figaro.env.USER!)
+              cmd.raise_unless_successful
+              cmd.stdout.each_line.map { |l| l.split(' ').first }
+            end
 
-# Hard sets the app's root directory to the current code base
-ENV['app_root_dir'] = File.expand_path('../..', __dir__)
-
-# NOTE: desktop_types has it's own initializer and is not setup here
-
-# Enforce the generally required keys
-Figaro.require_keys('log_level', 'pam_conf')
+models = desktops.map { |d| Desktop.new(name: d) }
+Desktop.instance_variable_set(:"@index", models)
 

@@ -188,6 +188,15 @@ class Session < Hashie::Trash
   end
 end
 
+class Desktop < Hashie::Trash
+  # This is initialized when the application starts
+  def self.index
+    @index || []
+  end
+
+  property :name
+end
+
 Screenshot = Struct.new(:session) do
   # Stored as a class method so it can be stubbed in the tests
   def self.path(username, id)

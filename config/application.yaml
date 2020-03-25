@@ -22,5 +22,5 @@ development:
 
 test:
   log_level: fatal
-  valid_desktop_types: 'gnome,xterm,chrome'
+  desktop_types: 'gnome,xterm,chrome'
 
