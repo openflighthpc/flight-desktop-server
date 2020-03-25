@@ -195,6 +195,24 @@ class Desktop < Hashie::Trash
   end
 
   property :name
+  property :verified, default: false
+
+  def verified?
+    verified
+  end
+
+  def verify_desktop(user:)
+    cmd = SystemCommand.verify_desktop(name, user: user)
+    self.verified = if /already been verified\.\Z/ =~ cmd.stdout.chomp
+      true
+    elsif /flight desktop prepare/ =~ cmd.stdout
+      false
+    elsif cmd.success?
+      true
+    else
+      false
+    end
+  end
 end
 
 Screenshot = Struct.new(:session) do

@@ -35,6 +35,8 @@ desktops =  if Figaro.env.desktop_types
               cmd.stdout.each_line.map { |l| l.split(' ').first }
             end
 
-models = desktops.map { |d| Desktop.new(name: d) }
+models = desktops.map do |name|
+  Desktop.new(name: name).tap { |d| d.verify_desktop(user: Figaro.env.USER!) }
+end
 Desktop.instance_variable_set(:"@index", models)
 
