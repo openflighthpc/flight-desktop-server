@@ -40,7 +40,7 @@ models = desktops.map { |n| Desktop.new(name: n) }
 # Verifies the desktops for the list command
 Thread.new do
   Parallel.each(models, in_threads: models.length) do |desktop|
-    desktop.verify_desktop(user: Figaro.env.USER!)
+    desktop.verify_desktop(user: Figaro.env.USER!) unless Figaro.env.RACK_ENV == 'test'
   end
 end
 
