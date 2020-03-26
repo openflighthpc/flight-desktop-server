@@ -38,6 +38,13 @@ desktop_types:
 cors_domain:
 
 # =============================================================================
+# Refresh Rate
+# Sets how often the desktops are verified. It may take up to this length of
+# time before a desktop appears verified. Must be a time in seconds
+# =============================================================================
+refresh_rate:
+
+# =============================================================================
 # Log Level [DEFAULT]
 # Specify which level of logging should be used. The supported values are:
 # fatal, error, warn, info, or debug

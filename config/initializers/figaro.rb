@@ -42,5 +42,5 @@ ENV['app_root_dir'] = File.expand_path('../..', __dir__)
 # NOTE: desktop_types has it's own initializer and is not setup here
 
 # Enforce the generally required keys
-Figaro.require_keys('log_level', 'pam_conf')
+Figaro.require_keys('log_level', 'pam_conf', 'refresh_rate')
 
