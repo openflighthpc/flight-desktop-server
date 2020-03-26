@@ -149,7 +149,7 @@ namespace '/sessions' do
 
   post do
     status 201
-    current_desktop.start_session(user: current_user).to_json
+    current_desktop.start_session!(user: current_user).to_json
   end
 
   namespace('/:id') do

@@ -139,53 +139,6 @@ class Session < Hashie::Trash
 end
 
 class Desktop < Hashie::Trash
-  class Starter < Hashie::Dash
-    property :desktop, required: true
-    property :user, required: true
-
-    def call
-      cmd = start
-      if /verified\Z/ =~ cmd.stderr
-        verify
-        cmd = start
-      end
-      raise InternalServerError unless cmd.success?
-      cmd
-    end
-
-    private
-
-    def start
-      SystemCommand.start_session(desktop, user: user)
-    end
-
-    def verify
-      cmd = SystemCommand.verify_desktop(desktop, user: user)
-      cmd.raise_unless_successful
-      if /already been verified\.\Z/ =~ cmd.stdout.chomp
-        raise UnexpectedError
-      elsif /flight desktop prepare/ =~ cmd.stdout
-        raise DesktopNotPrepared
-      elsif cmd.success?
-        # noop
-      else
-        raise InternalServerError
-      end
-    end
-  end
-
-  # NOTE: The start_session will attempt to verify the desktop if required
-  # GOTCHA: Because the system command always exits 1 on errors, the
-  #         verified/ missing toggle is based on string processing.
-  #
-  #         This makes the toggle brittle as a minor change in error message
-  #         could break the regex match. Instead `flight desktop` should be
-  #         updated to return different exit codes
-  def start_session(user:)
-    cmd = Starter.new(desktop: name, user: user).call
-    Session.build_from_output(cmd.stdout.split("\n").last(7), user: user)
-  end
-
   # This is initialized when the application starts
   def self.index
     @index || []
@@ -196,6 +149,23 @@ class Desktop < Hashie::Trash
 
   def verified?
     verified
+  end
+
+  # NOTE: The start_session will attempt to verify the desktop if required
+  # GOTCHA: Because the system command always exits 1 on errors, the
+  #         verified/ missing toggle is based on string processing.
+  #
+  #         This makes the toggle brittle as a minor change in error message
+  #         could break the regex match. Instead `flight desktop` should be
+  #         updated to return different exit codes
+  def start_session!(user:)
+    cmd = SystemCommand.start_session(name, user: user)
+    if /verified\Z/ =~ cmd.stderr
+      verify_desktop!(user: user)
+      cmd = SystemCommand.start_session(name, user: user)
+    end
+    raise InternalServerError unless cmd.success?
+    Session.build_from_output(cmd.stdout.split("\n").last(7), user: user)
   end
 
   def verify_desktop(user:)
@@ -209,6 +179,11 @@ class Desktop < Hashie::Trash
     else
       false
     end
+  end
+
+  def verify_desktop!(user:)
+    verify_desktop(user: user)
+    raise DesktopNotPrepared unless verified?
   end
 end
 

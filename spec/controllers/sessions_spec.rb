@@ -531,8 +531,8 @@ RSpec.describe '/sessions' do
         make_request
       end
 
-      it 'returns 500' do
-        expect(last_response.status).to be(500)
+      it 'returns 400' do
+        expect(last_response).to be_bad_request
       end
     end
 
