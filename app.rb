@@ -170,12 +170,6 @@ namespace '/sessions' do
       current_session.to_json
     end
 
-    # Deprecated! The base64 encoding is unnecessary
-    get '/screenshot' do
-      content_type 'image/png;base64'
-      Screenshot.new(current_session).base64_encode
-    end
-
     get '/screenshot.png' do
       content_type 'image/png'
       Screenshot.new(current_session).read
