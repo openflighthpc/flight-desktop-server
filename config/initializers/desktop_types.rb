@@ -28,21 +28,20 @@
 #===============================================================================
 
 # NOTE: All desktops must be stubbed in the spec
-unless Figaro.env.RACK_ENV! == 'test'
-  # Loads the available desktops from either the CLI or the environment
-  models = SystemCommand.avail_desktops(user: Figaro.env.USER!)
-                        .tap(&:raise_unless_successful)
-                        .stdout.each_line.map { |l| l.split(' ').first }
-                        .map { |n| Desktop.new(name: n) }
+return if Figaro.env.RACK_ENV! == 'test'
 
-  # Verifies the desktops for the list command
-  Thread.new do
-    loop do
-      models.each { |m| m.verify_desktop(user: Figaro.env.USER!) }
-      sleep Figaro.env.refresh_rate!.to_i
-    end
+# Periodically reload and verify the desktops
+Thread.new do
+  loop do
+    models = SystemCommand.avail_desktops(user: Figaro.env.USER!)
+                          .tap(&:raise_unless_successful)
+                          .stdout.each_line.map { |l| l.split(' ').first }
+                          .map { |n| Desktop.new(name: n) }
+
+    models.each { |m| m.verify_desktop(user: Figaro.env.USER!) }
+    Desktop.instance_variable_set(:"@index", models)
+
+    sleep Figaro.env.refresh_rate!.to_i
   end
-
-  Desktop.instance_variable_set(:"@index", models)
 end
 
