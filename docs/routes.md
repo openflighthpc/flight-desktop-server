@@ -203,7 +203,15 @@ The following error SHALL be returned if the `desktop` is missing.
 HTTP/2 404 Not Found
 Content-Type: application/json
 
-... WIP COMPLETE ME ...
+{
+  "errors": [
+    {
+      "status": "404",
+      "code": "Not Found",
+      "detail": "Could not find 'desktop': <missing-id>"
+    }
+  ]
+}
 ```
 
 ### DELETE Terminate
@@ -231,6 +239,78 @@ HTTP/2 200 OK
 Content-Type: image/png
 ... Image ...
 ```
+
+## Desktops
+
+### ID
+
+The `id` MUST be alphanumeric
+
+### GET Index
+
+Returns a list of the currently available desktops. The list MAY contain desktops which could not be verified when the application loaded/refreshed.
+
+```
+GET /desktops
+Authorization: Basic <base64 encoded username:password>
+Accepts: application/json
+
+HTTP/2 200 OK
+{
+  "data": [
+    <desktop-resource-object>,
+    ...
+  ]
+}
+```
+
+### GET Show
+
+Returns metadata about a particular `desktop`.
+
+```
+GET /desktop/:id
+Authorization: Basic <base64 encoded username:password>
+Accepts: application/json
+
+HTTP/2 200 OK
+{
+  "id": "<UUID>",
+  "verified": <true|false>
+}
+```
+
+#### Response Attributes
+
+*id*
+
+The name of the desktop
+
+Type: String
+
+*verified:*
+
+Whether the desktop has been checked for the required dependencies. Sessions creation MAY fail for unverified desktops.
+
+Type: Boolean
+
+#### Other Responses
+
+```
+HTTP/2 404 Not Found
+Content-Type: application/json
+
+{
+  "errors": [
+    {
+      "status": "404",
+      "code": "Not Found",
+      "detail": "Could not find 'desktop': <missing-id>"
+    }
+  ]
+}
+```
+
 
 # Copyright and License
 

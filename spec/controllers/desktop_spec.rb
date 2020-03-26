@@ -75,5 +75,39 @@ RSpec.describe '/desktops' do
       end
     end
   end
+
+  describe 'GET /desktops/:id' do
+    let(:url_id) { raise NotImplementedError, 'the spec :url_id has not been set' }
+
+    def make_request
+      standard_get_headers
+      get "/desktops/#{url_id}"
+    end
+
+    context 'when the desktop is missing' do
+      let(:url_id) { 'missing' }
+
+      before { make_request }
+
+      it 'returns 404' do
+        expect(last_response).to be_not_found
+      end
+    end
+
+    context 'when the desktop exists' do
+      let(:url_id) { desktop.name }
+      let(:desktop) { define_desktop('test', verified: false) }
+
+      before { make_request }
+
+      it 'returns 200' do
+        expect(last_response).to be_ok
+      end
+
+      it 'returns the desktop as json' do
+        expect(parse_last_response_body).to eq(desktop.as_json)
+      end
+    end
+  end
 end
 

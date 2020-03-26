@@ -131,6 +131,14 @@ namespace '/desktops' do
   get do
     { 'data' => Desktop.index }.to_json
   end
+
+  get('/:id') do
+    id = params[:id]
+    desktop = Desktop[id].tap do |d|
+      raise NotFound.new(type: 'desktop', id: id) unless d
+    end
+    desktop.to_json
+  end
 end
 
 namespace '/sessions' do
