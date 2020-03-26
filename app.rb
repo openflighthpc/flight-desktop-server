@@ -127,6 +127,12 @@ namespace '/ping' do
   end
 end
 
+namespace '/desktops' do
+  get do
+    { 'data' => Desktop.index }.to_json
+  end
+end
+
 namespace '/sessions' do
   helpers do
     def desktop_param

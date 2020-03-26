@@ -157,6 +157,17 @@ class Desktop < Hashie::Trash
   property :name
   property :verified, default: false
 
+  def to_json
+    as_json.to_json
+  end
+
+  def as_json(_ = {})
+    {
+      'id' => name,
+      'verified' => verified?
+    }
+  end
+
   def verified?
     verified
   end
