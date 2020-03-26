@@ -159,6 +159,7 @@ class Desktop < Hashie::Trash
   #         could break the regex match. Instead `flight desktop` should be
   #         updated to return different exit codes
   def start_session!(user:)
+    verify_desktop!(user: user) unless verified?
     cmd = SystemCommand.start_session(name, user: user)
     if /verified\Z/ =~ cmd.stderr
       verify_desktop!(user: user)
@@ -182,8 +183,7 @@ class Desktop < Hashie::Trash
   end
 
   def verify_desktop!(user:)
-    verify_desktop(user: user)
-    raise DesktopNotPrepared unless verified?
+    raise DesktopNotPrepared unless verify_desktop(user: user)
   end
 end
 
