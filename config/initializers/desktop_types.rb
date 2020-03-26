@@ -27,24 +27,22 @@
 # https://github.com/openflighthpc/flight-desktop-server
 #===============================================================================
 
-# Loads the available desktops from either the CLI or the environment
-desktops =  if Figaro.env.desktop_types
-              Figaro.env.desktop_types.split(',')
-            else
-              cmd = SystemCommand.avail_desktops(user: Figaro.env.USER!)
-              cmd.raise_unless_successful
-              cmd.stdout.each_line.map { |l| l.split(' ').first }
-            end
-models = desktops.map { |n| Desktop.new(name: n) }
+# NOTE: All desktops must be stubbed in the spec
+unless Figaro.env.RACK_ENV! == 'test'
+  # Loads the available desktops from either the CLI or the environment
+  models = SystemCommand.avail_desktops(user: Figaro.env.USER!)
+                        .tap(&:raise_unless_successful)
+                        .stdout.each_line.map { |l| l.split(' ').first }
+                        .map { |n| Desktop.new(name: n) }
 
-# Verifies the desktops for the list command
-Thread.new do
-  next if Figaro.env.RACK_ENV! == 'test'
-  loop do
-    models.each { |m| m.verify_desktop(user: Figaro.env.USER!) }
-    sleep Figaro.env.refresh_rate!.to_i
+  # Verifies the desktops for the list command
+  Thread.new do
+    loop do
+      models.each { |m| m.verify_desktop(user: Figaro.env.USER!) }
+      sleep Figaro.env.refresh_rate!.to_i
+    end
   end
-end
 
-Desktop.instance_variable_set(:"@index", models)
+  Desktop.instance_variable_set(:"@index", models)
+end
 

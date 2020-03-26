@@ -23,5 +23,4 @@ development:
 
 test:
   log_level: fatal
-  desktop_types: 'gnome,xterm,chrome'
 

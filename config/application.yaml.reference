@@ -19,18 +19,6 @@
 pam_conf:
 
 # =============================================================================
-# Vaild Desktop Types [OPTIONAL]
-# Override the list of valid desktop types. This variable is automatically set
-# by interrogating the underlining `desktop` CLI when the application loads.
-# The types must form a comma separated list.
-#
-# Setting this variable manually can be used to disable specific desktop types.
-# WARNING: Setting a deskstop type that does exists in the underlining CLI will
-#          lead to an undetermined error.
-# =============================================================================
-desktop_types:
-
-# =============================================================================
 # CORS Domain [OPTIONAL]
 # Enable cross origin resource sharing from the given domain. CORS is disabled
 # by default

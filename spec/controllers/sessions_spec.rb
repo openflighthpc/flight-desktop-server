@@ -477,7 +477,7 @@ RSpec.describe '/sessions' do
       subject do
         Session.new(
           id: '3335bb08-8d91-40fd-a973-da05bdbf3636',
-          desktop: 'gnome',
+          desktop: desktop,
           ip: '10.1.0.2',
           hostname: 'example.com',
           port: 5905,
@@ -486,7 +486,7 @@ RSpec.describe '/sessions' do
         )
       end
 
-      let(:desktop) { subject.desktop }
+      let(:desktop) { define_desktop('verified').name }
 
       before do
         allow(SystemCommand).to receive(:start_session).and_return(successful_create_stub)
@@ -507,7 +507,7 @@ RSpec.describe '/sessions' do
     end
 
     context 'when creating a unverified desktop' do
-      let(:desktop) { 'xterm' }
+      let(:desktop) { define_desktop('unverified', verified: false).name }
 
       before do
         allow(SystemCommand).to receive(:start_session).and_return(unverified_create_stub)
@@ -522,7 +522,7 @@ RSpec.describe '/sessions' do
     # This checks the error handling if the verify command fails. It does not mean the
     # desktop is unverified. In cases where the desktop is unverified, the command exits 0
     context 'when verifying a desktop fails' do
-      let(:desktop) { 'chrome' }
+      let(:desktop) { define_desktop('unverified', verified: false).name }
 
       before do
         allow(SystemCommand).to receive(:start_session).and_return(unverified_create_stub)
@@ -540,7 +540,7 @@ RSpec.describe '/sessions' do
     # as the desktop has already been verified. However due to the string processing involved,
     # a edge case could be triggered. Therefore it must explicitly return a InternalServerError
     context 'when the create gives a false-postive unverfied response' do
-      let(:desktop) { 'xterm' }
+      let(:desktop) { define_desktop('unverified', verified: false).name }
 
       let(:already_verified_stub) do
         SystemCommand.new(
@@ -560,7 +560,7 @@ RSpec.describe '/sessions' do
 
     # This tests when the verify command exits 0 but the desktop is otherwise unverified
     context 'when a desktop is successfully unverified' do
-      let(:desktop) { 'gnome' }
+      let(:desktop) { define_desktop('success-unverified', verified: false).name }
 
       let(:unsuccessful_verified_stub) do
         SystemCommand.new(
@@ -601,7 +601,7 @@ RSpec.describe '/sessions' do
     end
 
     context 'when verifing a desktop succeeds but the create otherwise fails' do
-      let(:desktop) { 'chrome' }
+      let(:desktop) { define_desktop('succeed-verified', verified: false).name }
 
       before do
         allow(SystemCommand).to receive(:start_session).and_return(unverified_create_stub)
@@ -619,7 +619,7 @@ RSpec.describe '/sessions' do
       subject do
         Session.new(
           id: '9633d854-1790-43b2-bf06-f6dc46bb4859',
-          desktop: 'xterm',
+          desktop: desktop,
           ip: '10.1.0.3',
           hostname: 'example.com',
           port: 5906,
@@ -628,7 +628,7 @@ RSpec.describe '/sessions' do
         )
       end
 
-      let(:desktop) { subject.desktop }
+      let(:desktop) { define_desktop('will-be-created', verified: false).name }
 
       before do
         allow(SystemCommand).to receive(:start_session).and_return(
