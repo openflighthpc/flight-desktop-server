@@ -135,6 +135,12 @@ namespace '/sessions' do
         raise BadRequest.new(detail: 'the "desktop" attribute is required by this request')
       end
     end
+
+    def current_desktop
+      Desktop.index.find { |d| d.name == desktop_param }.tap do |d|
+        raise NotFound.new(type: 'desktop', id: desktop_param) unless d
+      end
+    end
   end
 
   get do
@@ -143,7 +149,7 @@ namespace '/sessions' do
 
   post do
     status 201
-    Session.start_session(desktop_param, user: current_user).to_json
+    current_desktop.start_session(user: current_user).to_json
   end
 
   namespace('/:id') do

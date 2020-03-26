@@ -200,17 +200,10 @@ Content-Type: application/json
 The following error SHALL be returned if the `desktop` is missing.
 
 ```
-HTTP/2 400 Bad Request
+HTTP/2 404 Not Found
 Content-Type: application/json
 
-{
-  "errors": [
-    {
-      "status": "400",
-      "code": "Unknown Desktop"
-    }
-  ]
-}
+... WIP COMPLETE ME ...
 ```
 
 ### DELETE Terminate
