@@ -39,7 +39,9 @@ Thread.new do
                           .map { |n| Desktop.new(name: n) }
 
     models.each { |m| m.verify_desktop(user: Figaro.env.USER!) }
-    Desktop.instance_variable_set(:"@index", models)
+    hash = models.map { |m| [m.name, m] }.to_h
+
+    Desktop.instance_variable_set(:@cache, hash)
 
     sleep Figaro.env.refresh_rate!.to_i
   end

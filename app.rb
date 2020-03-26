@@ -137,7 +137,7 @@ namespace '/sessions' do
     end
 
     def current_desktop
-      Desktop.index.find { |d| d.name == desktop_param }.tap do |d|
+      Desktop[desktop_param].tap do |d|
         raise NotFound.new(type: 'desktop', id: desktop_param) unless d
       end
     end

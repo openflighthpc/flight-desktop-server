@@ -139,9 +139,19 @@ class Session < Hashie::Trash
 end
 
 class Desktop < Hashie::Trash
-  # This is initialized when the application starts
   def self.index
-    @index || []
+    cache.values
+  end
+
+  def self.[](key)
+    cache[key]
+  end
+
+  private_class_method
+
+  # This is set during the desktop initializer
+  def self.cache
+    @cache ||= {}
   end
 
   property :name
