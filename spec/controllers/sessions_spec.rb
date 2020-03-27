@@ -50,7 +50,7 @@ RSpec.describe '/sessions' do
 
   let(:index_multiple_stub) do
     stdout = sessions.each_with_index.map do |s, idx|
-      "#{s.id}    #{s.desktop}   #{s.hostname} #{s.ip}     #{idx}       #{s.port}    #{s.webport}   #{s.password}        Active"
+      "#{s.id}\t#{s.desktop}\t#{s.hostname}\t#{s.ip}\t#{idx}\t#{s.port}\t#{s.webport}\t#{s.password}\tActive"
     end.join("\n")
     SystemCommand.new(stdout: stdout, stderr: '', code: 0)
   end
@@ -192,6 +192,32 @@ RSpec.describe '/sessions' do
 
       it 'returns the sessions as JSON' do
         expect(parse_last_response_body.data).to eq(sessions.as_json)
+      end
+    end
+
+    context 'with a broken session' do
+      let(:broken_index_stub) do
+        SystemCommand.new(stderr: '', code: 0, stdout: <<~STDOUT)
+          #{id}\t\t\t\t\t\t\t\tBroken\n
+        STDOUT
+      end
+
+      let(:id) { '3d17d06e-701a-11ea-a14f-52540005505a' }
+
+      before do
+        allow(SystemCommand).to receive(:index_sessions).and_return(broken_index_stub)
+        make_request
+      end
+
+      it 'returns 200' do
+        expect(last_response).to be_ok
+      end
+
+      it 'returns a empty-ish response' do
+        data = parse_last_response_body.data.first.reject { |_, v| v.nil? }
+        res_id = data.delete('id')
+        expect(res_id).to eq(id)
+        expect(data).to be_empty
       end
     end
   end

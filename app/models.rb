@@ -36,7 +36,7 @@ class Session < Hashie::Trash
     cmd = SystemCommand.index_sessions(user: user)
     if cmd.success?
       cmd.stdout.split("\n").map do |line|
-        parts = line.squish.split(' ')
+        parts = line.split("\t").map { |p| p.empty? ? nil : p }
         new(
           id: parts[0],
           desktop: parts[1],
