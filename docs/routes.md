@@ -276,7 +276,8 @@ Accepts: application/json
 HTTP/2 200 OK
 {
   "id": "<UUID>",
-  "verified": <true|false>
+  "verified": <true|false>,
+  "summary": "<summary>"
 }
 ```
 
@@ -293,6 +294,12 @@ Type: String
 Whether the desktop has been checked for the required dependencies. Sessions creation MAY fail for unverified desktops.
 
 Type: Boolean
+
+*summary:*
+
+A short description on the desktop
+
+Type: String
 
 #### Other Responses
 
