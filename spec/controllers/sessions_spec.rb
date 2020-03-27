@@ -34,8 +34,14 @@ RSpec.describe '/sessions' do
   let(:url_id) { raise NotImplementedError, 'the spec :url_id has not been set' }
   let(:sessions) { raise NotImplementedError, 'the spec has not defined sessions' }
 
+  def meta_path(id)
+    File.join(cache_dir, 'flight/desktop/sessions', id, 'metadata.log')
+  end
+
+  let(:cache_dir) { "/home/#{username}/.cache" }
+
   let(:successful_cache_dir_stub) do
-    SystemCommand.new(stderr: '', code: 0, stdout: "/home/#{username}/.cache\n")
+    SystemCommand.new(stderr: '', code: 0, stdout: "#{cache_dir}\n")
   end
 
   let(:successful_find_stub) do
@@ -53,6 +59,15 @@ RSpec.describe '/sessions' do
   end
 
   let(:index_multiple_stub) do
+    raise 'FakeFS is not activated!' unless FakeFS.activated?
+    sessions.each do |session|
+      path = meta_path(session.id)
+      FileUtils.mkdir_p(File.dirname(path))
+      FileUtils.touch(path)
+      stat = File::Stat.new(path)
+      session.created_at = stat.birthtime
+      session.last_accessed_at = stat.ctime
+    end
     stdout = sessions.each_with_index.map do |s, idx|
       "#{s.id}\t#{s.desktop}\t#{s.hostname}\t#{s.ip}\t#{idx}\t#{s.port}\t#{s.webport}\t#{s.password}\t#{s.state}"
     end.join("\n")
@@ -60,6 +75,8 @@ RSpec.describe '/sessions' do
   end
 
   shared_examples 'sessions error when missing' do
+    around { |e| FakeFS.with { e.call } }
+
     context 'when the command fails' do
       let(:url_id) { 'missing' }
 
@@ -194,6 +211,8 @@ RSpec.describe '/sessions' do
         ].map { |h| Session.new(**h) }
       end
 
+      around { |e| FakeFS.with { e.call } }
+
       before do
         allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
@@ -287,6 +306,8 @@ RSpec.describe '/sessions' do
 
       let(:sessions) { [other1, subject, other2] }
 
+      around { |e| FakeFS.with { e.call } }
+
       before do
         # NOTE: "Temporarily" out of use
         # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
@@ -346,13 +367,15 @@ RSpec.describe '/sessions' do
 
       let(:url_id) { subject.id }
 
+      around { |e| FakeFS.with { e.call } }
+
       it 'returns 404' do
         # NOTE: "Temporarily" out of use
         # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         expect(Screenshot).to receive(:path).with(username, url_id)
-        FakeFS.with { make_request }
+        make_request
         expect(last_response).to be_not_found
       end
     end
@@ -375,12 +398,14 @@ RSpec.describe '/sessions' do
 
       let(:url_id) { subject.id }
 
+      around { |e| FakeFS.with { e.call } }
+
       it 'returns 500' do
         # NOTE: "Temporarily" out of use
         # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         allow(SystemCommand).to receive(:echo_cache_dir).and_return(exit_213_stub)
-        FakeFS.with { make_request }
+        make_request
         expect(last_response.status).to be(500)
       end
     end
@@ -412,17 +437,17 @@ RSpec.describe '/sessions' do
 
       let(:url_id) { subject.id }
 
+      around { |e| FakeFS.with { e.call } }
+
       before do
         # NOTE: "Temporarily" out of use
         # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
-        FakeFS.with do
-          path = Screenshot.path(username, subject.id)
-          FileUtils.mkdir_p(File.dirname path)
-          File.write(path, screenshot)
-          make_request
-        end
+        path = Screenshot.path(username, subject.id)
+        FileUtils.mkdir_p(File.dirname path)
+        File.write(path, screenshot)
+        make_request
       end
 
       it 'returns 200' do
@@ -761,6 +786,8 @@ RSpec.describe '/sessions' do
     include_examples 'sessions error when missing'
 
     context 'when the kill succeeds' do
+      around { |e| FakeFS.with { e.call } }
+
       before do
         # NOTE: "Temporarily" out of use
         # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
@@ -780,6 +807,8 @@ RSpec.describe '/sessions' do
     end
 
     context 'when the kill fails' do
+      around { |e| FakeFS.with { e.call } }
+
       before do
         # NOTE: "Temporarily" out of use
         # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)

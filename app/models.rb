@@ -33,7 +33,10 @@ class Session < Hashie::Trash
   include Hashie::Extensions::Dash::Coercion
 
   def self.index(user:)
-    cache = SystemCommand.echo_cache_dir(user: user)
+    cache_dir =  SystemCommand.echo_cache_dir(user: user)
+                              .tap(&:raise_unless_successful)
+                              .stdout
+                              .chomp
     cmd = SystemCommand.index_sessions(user: user)
     if cmd.success?
       cmd.stdout.split("\n").map do |line|
@@ -115,6 +118,8 @@ class Session < Hashie::Trash
   property :password
   property :user
   property :state
+  property :created_at, coerce: Time
+  property :last_accessed_at, coerce: Time
 
   def to_json
     as_json.to_json
