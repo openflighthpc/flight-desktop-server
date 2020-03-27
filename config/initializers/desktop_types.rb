@@ -35,8 +35,10 @@ Thread.new do
   loop do
     models = SystemCommand.avail_desktops(user: Figaro.env.USER!)
                           .tap(&:raise_unless_successful)
-                          .stdout.each_line.map { |l| l.split(' ').first }
-                          .map { |n| Desktop.new(name: n) }
+                          .stdout.each_line.map { |l| l.split("\t")[0..1] }
+                          .map do |data|
+      Desktop.new(name: data[0], summary: data[1])
+    end
 
     models.each { |m| m.verify_desktop(user: Figaro.env.USER!) }
     hash = models.map { |m| [m.name, m] }.to_h
