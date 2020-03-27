@@ -33,6 +33,7 @@ class Session < Hashie::Trash
   include Hashie::Extensions::Dash::Coercion
 
   def self.index(user:)
+    cache = SystemCommand.echo_cache_dir(user: user)
     cmd = SystemCommand.index_sessions(user: user)
     if cmd.success?
       cmd.stdout.split("\n").map do |line|

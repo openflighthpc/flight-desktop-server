@@ -34,6 +34,10 @@ RSpec.describe '/sessions' do
   let(:url_id) { raise NotImplementedError, 'the spec :url_id has not been set' }
   let(:sessions) { raise NotImplementedError, 'the spec has not defined sessions' }
 
+  let(:successful_cache_dir_stub) do
+    SystemCommand.new(stderr: '', code: 0, stdout: "/home/#{username}/.cache\n")
+  end
+
   let(:successful_find_stub) do
     SystemCommand.new(
       stderr: '', code: 0, stdout: <<~STDOUT
@@ -62,6 +66,7 @@ RSpec.describe '/sessions' do
       before do
         # NOTE: "Temporarily" out of use
         # allow(SystemCommand).to receive(:find_session).and_return(exit_213_stub)
+        allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(exit_213_stub)
         make_request
       end
@@ -108,6 +113,7 @@ RSpec.describe '/sessions' do
       let(:sessions) { [other1, other2] }
 
       before do
+        allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         make_request
       end
@@ -126,6 +132,7 @@ RSpec.describe '/sessions' do
 
     context 'without any running sessions' do
       before do
+        allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(exit_0_stub)
         make_request
       end
@@ -141,6 +148,7 @@ RSpec.describe '/sessions' do
 
     context 'when the index system command fails' do
       before do
+        allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(exit_213_stub)
         make_request
       end
@@ -187,6 +195,7 @@ RSpec.describe '/sessions' do
       end
 
       before do
+        allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         make_request
       end
@@ -210,6 +219,7 @@ RSpec.describe '/sessions' do
       let(:id) { '3d17d06e-701a-11ea-a14f-52540005505a' }
 
       before do
+        allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(broken_index_stub)
         make_request
       end
@@ -280,6 +290,7 @@ RSpec.describe '/sessions' do
       before do
         # NOTE: "Temporarily" out of use
         # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
+        allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         make_request
       end
@@ -313,10 +324,6 @@ RSpec.describe '/sessions' do
     def make_request
       standard_get_headers
       get "/sessions/#{url_id}/screenshot.png"
-    end
-
-    let(:successful_cache_dir_stub) do
-      SystemCommand.new(stderr: '', code: 0, stdout: "/home/#{username}/.cache\n")
     end
 
     include_examples 'sessions error when missing'
@@ -757,6 +764,7 @@ RSpec.describe '/sessions' do
       before do
         # NOTE: "Temporarily" out of use
         # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
+        allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         allow(SystemCommand).to receive(:kill_session).and_return(exit_0_stub)
         make_request
@@ -775,6 +783,7 @@ RSpec.describe '/sessions' do
       before do
         # NOTE: "Temporarily" out of use
         # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
+        allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         allow(SystemCommand).to receive(:kill_session).and_return(exit_213_stub)
         make_request
