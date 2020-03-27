@@ -444,6 +444,28 @@ RSpec.describe '/sessions' do
       )
     end
 
+    let(:unsuccessful_verified_stub) do
+      SystemCommand.new(
+        code: 0, stderr: '', stdout: <<~STDOUT
+          Verifying desktop type #{desktop}:
+
+             > ❌ Repository: #{desktop}
+             > ❌ Package: #{desktop}-package
+
+          Desktop type chrome has missing prerequisites:
+
+           * Package repo: #{desktop}
+           * Package: #{desktop}-package
+
+          Before this desktop type can be used, it must be prepared using the
+          'prepare' command, i.e.:
+
+            flight desktop prepare #{desktop}
+
+        STDOUT
+      )
+    end
+
     def make_request
       standard_post_headers
       post '/sessions', { desktop: desktop }.to_json
@@ -457,12 +479,8 @@ RSpec.describe '/sessions' do
         make_request
       end
 
-      it 'returns 400' do
-        expect(last_response).to be_bad_request
-      end
-
-      it 'returns Unknown Desktop' do
-        expect(parse_last_response_body.errors.first.code).to eq('Unknown Desktop')
+      it 'returns 404' do
+        expect(last_response).to be_not_found
       end
     end
 
@@ -481,7 +499,7 @@ RSpec.describe '/sessions' do
       subject do
         Session.new(
           id: '3335bb08-8d91-40fd-a973-da05bdbf3636',
-          desktop: 'definitely-a-verified-desktop-type',
+          desktop: desktop,
           ip: '10.1.0.2',
           hostname: 'example.com',
           port: 5905,
@@ -490,9 +508,10 @@ RSpec.describe '/sessions' do
         )
       end
 
-      let(:desktop) { subject.desktop }
+      let(:desktop) { define_desktop('verified').name }
 
       before do
+        expect(SystemCommand).not_to receive(:verify_desktop)
         allow(SystemCommand).to receive(:start_session).and_return(successful_create_stub)
         make_request
       end
@@ -511,7 +530,7 @@ RSpec.describe '/sessions' do
     end
 
     context 'when creating a unverified desktop' do
-      let(:desktop) { 'unverified' }
+      let(:desktop) { define_desktop('unverified', verified: false).name }
 
       before do
         allow(SystemCommand).to receive(:start_session).and_return(unverified_create_stub)
@@ -526,17 +545,16 @@ RSpec.describe '/sessions' do
     # This checks the error handling if the verify command fails. It does not mean the
     # desktop is unverified. In cases where the desktop is unverified, the command exits 0
     context 'when verifying a desktop fails' do
-      let(:desktop) { 'unverified' }
+      let(:desktop) { define_desktop('unverified', verified: false).name }
 
       before do
-        allow(SystemCommand).to receive(:start_session).and_return(unverified_create_stub)
         expect(SystemCommand).to receive(:verify_desktop).and_return(exit_213_stub)
 
         make_request
       end
 
-      it 'returns 500' do
-        expect(last_response.status).to be(500)
+      it 'returns 400' do
+        expect(last_response).to be_bad_request
       end
     end
 
@@ -544,7 +562,7 @@ RSpec.describe '/sessions' do
     # as the desktop has already been verified. However due to the string processing involved,
     # a edge case could be triggered. Therefore it must explicitly return a InternalServerError
     context 'when the create gives a false-postive unverfied response' do
-      let(:desktop) { 'false-positive-unverfied' }
+      let(:desktop) { define_desktop('unverified', verified: false).name }
 
       let(:already_verified_stub) do
         SystemCommand.new(
@@ -564,32 +582,9 @@ RSpec.describe '/sessions' do
 
     # This tests when the verify command exits 0 but the desktop is otherwise unverified
     context 'when a desktop is successfully unverified' do
-      let(:desktop) { 'can-not-be-verified' }
-
-      let(:unsuccessful_verified_stub) do
-        SystemCommand.new(
-          code: 0, stderr: '', stdout: <<~STDOUT
-            Verifying desktop type #{desktop}:
-
-               > ❌ Repository: #{desktop}
-               > ❌ Package: #{desktop}-package
-
-            Desktop type chrome has missing prerequisites:
-
-             * Package repo: #{desktop}
-             * Package: #{desktop}-package
-
-            Before this desktop type can be used, it must be prepared using the
-            'prepare' command, i.e.:
-
-              flight desktop prepare #{desktop}
-
-          STDOUT
-        )
-      end
+      let(:desktop) { define_desktop('success-unverified', verified: false).name }
 
       before do
-        expect(SystemCommand).to receive(:start_session).once.and_return(unverified_create_stub)
         allow(SystemCommand).to receive(:verify_desktop).and_return(unsuccessful_verified_stub)
 
         make_request
@@ -604,12 +599,12 @@ RSpec.describe '/sessions' do
       end
     end
 
-    context 'when verifing a desktop succeeds but the create otherwise fails' do
-      let(:desktop) { 'unverified' }
+    context 'with an unverifing desktop when the start always errors' do
+      let(:desktop) { define_desktop('succeed-verified', verified: false).name }
 
       before do
         allow(SystemCommand).to receive(:start_session).and_return(unverified_create_stub)
-        expect(SystemCommand).to receive(:verify_desktop).and_return(successful_verified_stub)
+        allow(SystemCommand).to receive(:verify_desktop).and_return(successful_verified_stub)
 
         make_request
       end
@@ -619,11 +614,11 @@ RSpec.describe '/sessions' do
       end
     end
 
-    context 'when verifing a desktop command succeeds and the retry also succeeds' do
+    context 'when an unverified desktop cache status is incorrect and verification fails' do
       subject do
         Session.new(
           id: '9633d854-1790-43b2-bf06-f6dc46bb4859',
-          desktop: 'unverified',
+          desktop: desktop,
           ip: '10.1.0.3',
           hostname: 'example.com',
           port: 5906,
@@ -632,13 +627,45 @@ RSpec.describe '/sessions' do
         )
       end
 
-      let(:desktop) { subject.desktop }
+      let(:desktop_model) { define_desktop('will-not-be-created', verified: true) }
+      let(:desktop) { desktop_model.name }
+
+      before do
+        allow(SystemCommand).to receive(:start_session).and_return(unverified_create_stub)
+        allow(SystemCommand).to receive(:verify_desktop).and_return(unsuccessful_verified_stub)
+        make_request
+      end
+
+      it 'returns 400' do
+        expect(last_response).to be_bad_request
+      end
+
+      it 'the desktop is flagged as unverified' do
+        expect(desktop_model).not_to be_verified
+      end
+    end
+
+    context 'when verifing a desktop command succeeds and the retry also succeeds' do
+      subject do
+        Session.new(
+          id: '9633d854-1790-43b2-bf06-f6dc46bb4859',
+          desktop: desktop,
+          ip: '10.1.0.3',
+          hostname: 'example.com',
+          port: 5906,
+          webport: 41311,
+          password: 'ca77d490'
+        )
+      end
+
+      let(:desktop_model) { define_desktop('will-be-created', verified: false) }
+      let(:desktop) { desktop_model.name }
 
       before do
         allow(SystemCommand).to receive(:start_session).and_return(
           unverified_create_stub, successful_create_stub
         )
-        expect(SystemCommand).to receive(:verify_desktop).and_return(successful_verified_stub)
+        allow(SystemCommand).to receive(:verify_desktop).and_return(successful_verified_stub)
 
         make_request
       end
@@ -653,6 +680,10 @@ RSpec.describe '/sessions' do
       # Revisit as required
       it 'returns the subject as JSON' do
         expect(parse_last_response_body).to eq(subject.as_json.merge('port' => nil))
+      end
+
+      it 'sets the desktop as verified' do
+        expect(desktop_model).to be_verified
       end
     end
   end

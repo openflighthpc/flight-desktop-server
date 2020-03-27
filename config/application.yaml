@@ -16,6 +16,7 @@
 # STATIC DEFAULTS:
 log_level:  info
 pam_conf:   sshd
+refresh_rate: '3600'
 
 development:
   log_level: debug

@@ -49,6 +49,18 @@ module SharedSpecContext
 
   let(:username) { 'default-test-user' }
   let(:password) { 'default-test-password' }
+
+  def define_desktop(name, verified: true)
+    Desktop.new(name: name.to_s, verified: verified).tap do |model|
+      Desktop.instance_variable_get(:@cache)[model.name] = model
+    end
+  end
+
+  around do |example|
+    Desktop.instance_variable_set(:@cache, {})
+    example.call
+    Desktop.instance_variable_set(:@cache, nil)
+  end
 end
 
 RSpec.configure do |c|

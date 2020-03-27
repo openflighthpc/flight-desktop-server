@@ -200,14 +200,15 @@ Content-Type: application/json
 The following error SHALL be returned if the `desktop` is missing.
 
 ```
-HTTP/2 400 Bad Request
+HTTP/2 404 Not Found
 Content-Type: application/json
 
 {
   "errors": [
     {
-      "status": "400",
-      "code": "Unknown Desktop"
+      "status": "404",
+      "code": "Not Found",
+      "detail": "Could not find 'desktop': <missing-id>"
     }
   ]
 }
@@ -225,23 +226,7 @@ Accepts: application/json
 HTTP/2 204 No Content
 ```
 
-### GET Screenshot [OLD - Deprecated]
-
-This is the old route that returns the screenshot associated with a session. In returns the screenshot as a base64 encoded `png`.
-
-It is RECOMMENDED the screenshot is retrieved with the new route described below as it avoids base64 encoding the image.
-
-```
-GET /sessions/:id/screenshot
-Authorization: Basic <base64 encoded username:password>
-Accepts: image/png;base64
-
-HTTP/2 200 OK
-Content-Type: image/png;base64
-... Base64 Encoded Image ...
-```
-
-### GET Screenshot [NEW - Recommended]
+### GET Screenshot
 
 Retrieve the screenshot associated with a session as `image/png`. This route can be directly embedded into a `src` tag.
 
@@ -254,6 +239,78 @@ HTTP/2 200 OK
 Content-Type: image/png
 ... Image ...
 ```
+
+## Desktops
+
+### ID
+
+The `id` MUST be alphanumeric
+
+### GET Index
+
+Returns a list of the currently available desktops. The list MAY contain desktops which could not be verified when the application loaded/refreshed.
+
+```
+GET /desktops
+Authorization: Basic <base64 encoded username:password>
+Accepts: application/json
+
+HTTP/2 200 OK
+{
+  "data": [
+    <desktop-resource-object>,
+    ...
+  ]
+}
+```
+
+### GET Show
+
+Returns metadata about a particular `desktop`.
+
+```
+GET /desktop/:id
+Authorization: Basic <base64 encoded username:password>
+Accepts: application/json
+
+HTTP/2 200 OK
+{
+  "id": "<UUID>",
+  "verified": <true|false>
+}
+```
+
+#### Response Attributes
+
+*id*
+
+The name of the desktop
+
+Type: String
+
+*verified:*
+
+Whether the desktop has been checked for the required dependencies. Sessions creation MAY fail for unverified desktops.
+
+Type: Boolean
+
+#### Other Responses
+
+```
+HTTP/2 404 Not Found
+Content-Type: application/json
+
+{
+  "errors": [
+    {
+      "status": "404",
+      "code": "Not Found",
+      "detail": "Could not find 'desktop': <missing-id>"
+    }
+  ]
+}
+```
+
 
 # Copyright and License
 

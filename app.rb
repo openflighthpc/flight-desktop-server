@@ -127,12 +127,32 @@ namespace '/ping' do
   end
 end
 
+namespace '/desktops' do
+  get do
+    { 'data' => Desktop.index }.to_json
+  end
+
+  get('/:id') do
+    id = params[:id]
+    desktop = Desktop[id].tap do |d|
+      raise NotFound.new(type: 'desktop', id: id) unless d
+    end
+    desktop.to_json
+  end
+end
+
 namespace '/sessions' do
   helpers do
     def desktop_param
       params[:desktop].tap do |d|
         next if d
         raise BadRequest.new(detail: 'the "desktop" attribute is required by this request')
+      end
+    end
+
+    def current_desktop
+      Desktop[desktop_param].tap do |d|
+        raise NotFound.new(type: 'desktop', id: desktop_param) unless d
       end
     end
   end
@@ -143,7 +163,7 @@ namespace '/sessions' do
 
   post do
     status 201
-    Session.start_session(desktop_param, user: current_user).to_json
+    current_desktop.start_session!(user: current_user).to_json
   end
 
   namespace('/:id') do
@@ -162,12 +182,6 @@ namespace '/sessions' do
 
     get do
       current_session.to_json
-    end
-
-    # Deprecated! The base64 encoding is unnecessary
-    get '/screenshot' do
-      content_type 'image/png;base64'
-      Screenshot.new(current_session).base64_encode
     end
 
     get '/screenshot.png' do
