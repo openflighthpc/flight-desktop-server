@@ -50,7 +50,7 @@ RSpec.describe '/sessions' do
 
   let(:index_multiple_stub) do
     stdout = sessions.each_with_index.map do |s, idx|
-      "#{s.id}\t#{s.desktop}\t#{s.hostname}\t#{s.ip}\t#{idx}\t#{s.port}\t#{s.webport}\t#{s.password}\tActive"
+      "#{s.id}\t#{s.desktop}\t#{s.hostname}\t#{s.ip}\t#{idx}\t#{s.port}\t#{s.webport}\t#{s.password}\t#{s.state}"
     end.join("\n")
     SystemCommand.new(stdout: stdout, stderr: '', code: 0)
   end
@@ -87,7 +87,8 @@ RSpec.describe '/sessions' do
           hostname: 'example.com',
           port: 5923,
           webport: 41401,
-          password: 'b187668d'
+          password: 'b187668d',
+          state: 'Active'
         )
       end
 
@@ -99,7 +100,8 @@ RSpec.describe '/sessions' do
           hostname: 'example.com',
           port: 5924,
           webport: 41402,
-          password: '8b17ba61'
+          password: '8b17ba61',
+          state: 'Active'
         )
       end
 
@@ -158,7 +160,8 @@ RSpec.describe '/sessions' do
             ip: '10.101.0.1',
             port: 5901,
             webport: 41301,
-            password: 'GovCosh6'
+            password: 'GovCosh6',
+            state: 'Active'
           },
           {
             id: '135036a4-0471-4014-ab56-7b65648895df',
@@ -167,7 +170,8 @@ RSpec.describe '/sessions' do
             ip: '10.101.0.2',
             port: 5902,
             webport: 41302,
-            password: 'Dinzeph3'
+            password: 'Dinzeph3',
+            state: 'Active'
           },
           {
             id: '135c07c2-5c9f-4e32-9372-a408d2bbe621',
@@ -176,7 +180,8 @@ RSpec.describe '/sessions' do
             ip: '10.101.0.3',
             port: 5903,
             webport: 41303,
-            password: '5wroliv5'
+            password: '5wroliv5',
+            state: 'Active'
           }
         ].map { |h| Session.new(**h) }
       end
@@ -215,8 +220,8 @@ RSpec.describe '/sessions' do
 
       it 'returns a empty-ish response' do
         data = parse_last_response_body.data.first.reject { |_, v| v.nil? }
-        res_id = data.delete('id')
-        expect(res_id).to eq(id)
+        expect(data.delete('id')).to eq(id)
+        expect(data.delete('state')).to eq('Broken')
         expect(data).to be_empty
       end
     end
@@ -239,7 +244,8 @@ RSpec.describe '/sessions' do
           hostname: 'example.com',
           port: 5956,
           webport: 41304,
-          password: '97InM80d'
+          password: '97InM80d',
+          state: 'Active'
         )
       end
 
@@ -251,7 +257,8 @@ RSpec.describe '/sessions' do
           hostname: 'example.com',
           port: 5957,
           webport: 41305,
-          password: 'df18bb48'
+          password: 'df18bb48',
+          state: 'Active'
         )
       end
 
@@ -263,7 +270,8 @@ RSpec.describe '/sessions' do
           hostname: 'example.com',
           port: 5957,
           webport: 41306,
-          password: 'a8fd740d'
+          password: 'a8fd740d',
+          state: 'Active'
         )
       end
 
@@ -322,7 +330,8 @@ RSpec.describe '/sessions' do
           hostname: 'example.com',
           port: 5942,
           webport: 41307,
-          password: 'b74fbb5d'
+          password: 'b74fbb5d',
+          state: 'Active'
         )
       end
 
@@ -350,7 +359,8 @@ RSpec.describe '/sessions' do
           hostname: 'example.com',
           port: 5942,
           webport: 41308,
-          password: 'b74fbb5d'
+          password: 'b74fbb5d',
+          state: 'Active'
         )
       end
 
@@ -377,7 +387,8 @@ RSpec.describe '/sessions' do
           hostname: 'example.com',
           port: 5944,
           webport: 41309,
-          password: '29d20f04'
+          password: '29d20f04',
+          state: 'Active'
         )
       end
 
@@ -530,7 +541,8 @@ RSpec.describe '/sessions' do
           hostname: 'example.com',
           port: 5905,
           webport: 41310,
-          password: 'WakofEb6'
+          password: 'WakofEb6',
+          state: 'Active'
         )
       end
 
@@ -547,11 +559,11 @@ RSpec.describe '/sessions' do
       end
 
       # NOTE: BUG NOTICE!
-      # The create method does not return the websockify port! This should be fixed TBA
-      # Until then, this spec has been updated to reflect the bug
-      # Revisit as required
+      # The create method does not return the websockify port or the state
       it 'returns the subject as JSON' do
-        expect(parse_last_response_body).to eq(subject.as_json.merge('port' => nil))
+        expect(parse_last_response_body).to eq(
+          subject.as_json.merge('port' => nil, 'state' => nil)
+        )
       end
     end
 
@@ -649,7 +661,8 @@ RSpec.describe '/sessions' do
           hostname: 'example.com',
           port: 5906,
           webport: 41311,
-          password: 'ca77d490'
+          password: 'ca77d490',
+          state: 'Active'
         )
       end
 
@@ -680,7 +693,8 @@ RSpec.describe '/sessions' do
           hostname: 'example.com',
           port: 5906,
           webport: 41311,
-          password: 'ca77d490'
+          password: 'ca77d490',
+          state: 'Active'
         )
       end
 
@@ -701,11 +715,11 @@ RSpec.describe '/sessions' do
       end
 
       # NOTE: BUG NOTICE!
-      # The create method does not return the websockify port! This should be fixed TBA
-      # Until then, this spec has been updated to reflect the bug
-      # Revisit as required
+      # The create method does not return the websockify port or the state
       it 'returns the subject as JSON' do
-        expect(parse_last_response_body).to eq(subject.as_json.merge('port' => nil))
+        expect(parse_last_response_body).to eq(
+          subject.as_json.merge('port' => nil, 'state' => nil)
+        )
       end
 
       it 'sets the desktop as verified' do
@@ -723,7 +737,8 @@ RSpec.describe '/sessions' do
         hostname: 'example.com',
         port: 5906,
         webport: 41312,
-        password: 'a33ff119'
+        password: 'a33ff119',
+        state: 'Active'
       )
     end
 

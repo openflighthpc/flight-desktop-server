@@ -45,6 +45,7 @@ class Session < Hashie::Trash
           port: parts[5],
           webport: parts[6],
           password: parts[7],
+          state: parts[8],
           user: user
         )
       end
@@ -112,6 +113,7 @@ class Session < Hashie::Trash
   property :webport, coerce: String
   property :password
   property :user
+  property :state
 
   def to_json
     as_json.to_json
@@ -124,7 +126,8 @@ class Session < Hashie::Trash
       'ip' => ip,
       'hostname' => hostname,
       'port' => webport,
-      'password' => password
+      'password' => password,
+      'state' => state
     }
   end
 
