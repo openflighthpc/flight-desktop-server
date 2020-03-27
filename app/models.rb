@@ -78,56 +78,6 @@ class Session < Hashie::Trash
     build_from_output(cmd.stdout, user: user)
   end
 
-  class Starter < Hashie::Dash
-    property :desktop, required: true
-    property :user, required: true
-
-    def call
-      cmd = start
-      if /verified\Z/ =~ cmd.stderr
-        verify
-        cmd = start
-      end
-      raise UnknownDesktop if /unknown desktop type/ =~ cmd.stderr
-      raise InternalServerError unless cmd.success?
-      cmd
-    end
-
-    private
-
-    def start
-      SystemCommand.start_session(desktop, user: user)
-    end
-
-    def verify
-      cmd = SystemCommand.verify_desktop(desktop, user: user)
-      cmd.raise_unless_successful
-      if /already been verified\.\Z/ =~ cmd.stdout.chomp
-        raise UnexpectedError
-      elsif /flight desktop prepare/ =~ cmd.stdout
-        raise DesktopNotPrepared
-      elsif cmd.success?
-        # noop
-      else
-        raise InternalServerError
-      end
-    end
-  end
-
-  # NOTE: The start_session will attempt to verify the desktop if required
-  # GOTCHA: Because the system command always exits 1 on errors, the
-  #         verified/ missing toggle is based on string processing.
-  #
-  #         This makes the toggle brittle as a minor change in error message
-  #         could break the regex match. Instead `flight desktop` should be
-  #         updated to return different exit codes
-  def self.start_session(desktop, user:)
-    cmd = Starter.new(desktop: desktop, user: user).call
-    build_from_output(cmd.stdout.split("\n").last(7), user: user)
-  end
-
-  private_class_method
-
   def self.build_from_output(lines, user:)
     lines = lines.split("\n") if lines.is_a?(String)
     data = lines.each_with_object({}) do |line, memo|
@@ -185,6 +135,76 @@ class Session < Hashie::Trash
     else
       raise InternalServerError.new(details: 'failed to delete the session')
     end
+  end
+end
+
+class Desktop < Hashie::Trash
+  def self.index
+    cache.values
+  end
+
+  def self.[](key)
+    cache[key]
+  end
+
+  private_class_method
+
+  # This is set during the desktop initializer
+  def self.cache
+    @cache ||= {}
+  end
+
+  property :name
+  property :verified, default: false
+
+  def to_json
+    as_json.to_json
+  end
+
+  def as_json(_ = {})
+    {
+      'id' => name,
+      'verified' => verified?
+    }
+  end
+
+  def verified?
+    verified
+  end
+
+  # NOTE: The start_session will attempt to verify the desktop if required
+  # GOTCHA: Because the system command always exits 1 on errors, the
+  #         verified/ missing toggle is based on string processing.
+  #
+  #         This makes the toggle brittle as a minor change in error message
+  #         could break the regex match. Instead `flight desktop` should be
+  #         updated to return different exit codes
+  def start_session!(user:)
+    verify_desktop!(user: user) unless verified?
+    cmd = SystemCommand.start_session(name, user: user)
+    if /verified\Z/ =~ cmd.stderr
+      verify_desktop!(user: user)
+      cmd = SystemCommand.start_session(name, user: user)
+    end
+    raise InternalServerError unless cmd.success?
+    Session.build_from_output(cmd.stdout.split("\n").last(7), user: user)
+  end
+
+  def verify_desktop(user:)
+    cmd = SystemCommand.verify_desktop(name, user: user)
+    self.verified = if /already been verified\.\Z/ =~ cmd.stdout.chomp
+      true
+    elsif /flight desktop prepare/ =~ cmd.stdout
+      false
+    elsif cmd.success?
+      true
+    else
+      false
+    end
+  end
+
+  def verify_desktop!(user:)
+    raise DesktopNotPrepared unless verify_desktop(user: user)
   end
 end
 

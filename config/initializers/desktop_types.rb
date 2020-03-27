@@ -27,50 +27,23 @@
 # https://github.com/openflighthpc/flight-desktop-server
 #===============================================================================
 
-task :require_bundler do
-  $: << __dir__
-  $: << File.join(__dir__, 'lib')
-  ENV['BUNDLE_GEMFILE'] ||= File.join(__dir__, 'Gemfile')
+# NOTE: All desktops must be stubbed in the spec
+return if Figaro.env.RACK_ENV! == 'test'
 
-  require 'rubygems'
-  require 'bundler'
+# Periodically reload and verify the desktops
+Thread.new do
+  loop do
+    models = SystemCommand.avail_desktops(user: Figaro.env.USER!)
+                          .tap(&:raise_unless_successful)
+                          .stdout.each_line.map { |l| l.split(' ').first }
+                          .map { |n| Desktop.new(name: n) }
 
-  raise <<~ERROR.chomp unless ENV['RACK_ENV']
-    Can not require the application because the RACK_ENV has not been set.
-    Please export the env to your environment and try again:
+    models.each { |m| m.verify_desktop(user: Figaro.env.USER!) }
+    hash = models.map { |m| [m.name, m] }.to_h
 
-    export RACK_ENV=production
-  ERROR
+    Desktop.instance_variable_set(:@cache, hash)
 
-  Bundler.require(:default, ENV['RACK_ENV'].to_sym)
+    sleep Figaro.env.refresh_rate!.to_i
+  end
 end
-
-task require: :require_bundler do
-  require 'json'
-  require 'sinatra'
-  require 'config/initializers/figaro'
-  require 'config/initializers/logger'
-  require 'app/system_command'
-  require 'app/errors'
-  require 'app/models'
-  require 'config/initializers/desktop_types'
-  require 'app'
-end
-
-task console: :require do
-  Bundler.require(:default, ENV['RACK_ENV'].to_sym, :pry)
-  binding.pry
-end
-
-# task 'token:admin', [:days] => :require do |task, args|
-#   raise NotImplementedError
-#   token = Token.new(admin: true)
-#                .tap { |t| t.exp_days = args[:days].to_i if args[:days] }
-#   puts token.generate_jwt
-# end
-
-# task 'token:user', [:days] => :require do |task, args|
-#   token = Token.new.tap { |t| t.exp_days = args[:days].to_i if args[:days] }
-#   puts token.generate_jwt
-# end
 

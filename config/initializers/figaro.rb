@@ -39,6 +39,8 @@ Figaro.load
 # Hard sets the app's root directory to the current code base
 ENV['app_root_dir'] = File.expand_path('../..', __dir__)
 
+# NOTE: desktop_types has it's own initializer and is not setup here
+
 # Enforce the generally required keys
-Figaro.require_keys('log_level', 'pam_conf')
+Figaro.require_keys('log_level', 'pam_conf', 'refresh_rate')
 

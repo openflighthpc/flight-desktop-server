@@ -12,21 +12,28 @@
 # =============================================================================
 
 # =============================================================================
-# CORS Domain
-# Enable cross origin resource sharing from the given domain. CORS is disabled
-# by default
-# =============================================================================
-cors_domain:
-
-# =============================================================================
-# Pam Configuration Name
+# Pam Configuration Name [DEFAULT]
 # Specify which pam configuration file should be used to authenticate requests.
 # It should correlate to a filename stored within /etc/pam.d
 # =============================================================================
 pam_conf:
 
 # =============================================================================
-# Log Level
+# CORS Domain [OPTIONAL]
+# Enable cross origin resource sharing from the given domain. CORS is disabled
+# by default
+# =============================================================================
+cors_domain:
+
+# =============================================================================
+# Refresh Rate
+# Sets how often the desktops are verified. It may take up to this length of
+# time before a desktop appears verified. Must be a time in seconds
+# =============================================================================
+refresh_rate:
+
+# =============================================================================
+# Log Level [DEFAULT]
 # Specify which level of logging should be used. The supported values are:
 # fatal, error, warn, info, or debug
 # =============================================================================
