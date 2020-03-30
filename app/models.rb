@@ -37,7 +37,7 @@ class Session < Hashie::Trash
     if cmd.success?
       cmd.stdout.split("\n").map do |line|
         parts = line.split("\t").map { |p| p.empty? ? nil : p }
-        new(
+        loader(
           id: parts[0],
           desktop: parts[1],
           hostname: parts[2],
@@ -102,7 +102,7 @@ class Session < Hashie::Trash
       end
       memo[key] = value
     end
-    new(user: user, **data)
+    loader(user: user, **data)
   end
 
   property :id
@@ -118,21 +118,19 @@ class Session < Hashie::Trash
   property :last_accessed_at, coerce: Time
   property :cache_dir
 
-  def initialize(*_)
-    super
-    unless self.created_at && self.last_accessed_at
-      cache_dir =  SystemCommand.echo_cache_dir(user: user)
-                                .tap(&:raise_unless_successful)
-                                .stdout
-                                .chomp
-      self.created_at ||= begin
-        path = File.join(cache_dir, 'flight/desktop/sessions', id, 'metadata.log')
-        File::Stat.new(path).ctime
-      end
+  def self.loader(*a)
+    new(*a).tap do |session|
+      session.load_created_at unless session.load_created_at
     end
   end
 
-  def meta_path
+  def load_created_at
+    cache_dir =  SystemCommand.echo_cache_dir(user: user)
+                              .tap(&:raise_unless_successful)
+                              .stdout
+                              .chomp
+    path = File.join(cache_dir, 'flight/desktop/sessions', id, 'metadata.log')
+    self.created_at ||= File::Stat.new(path).ctime
   end
 
   def to_json
