@@ -37,7 +37,7 @@ RSpec.describe '/sessions' do
   def build_session(**opts)
     raise 'missing id' unless opts[:id]
     opts[:created_at] ||= begin
-      path = File.join(cache_dir, 'flight/desktop/sessions', opts[:id], 'metadata.log')
+      path = File.join(cache_dir, 'flight/desktop/sessions', opts[:id], 'metadata.yml')
       FileUtils.mkdir_p(File.dirname(path))
       FileUtils.touch(path)
       File::Stat.new(path).ctime

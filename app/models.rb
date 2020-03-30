@@ -129,7 +129,7 @@ class Session < Hashie::Trash
                               .tap(&:raise_unless_successful)
                               .stdout
                               .chomp
-    path = File.join(cache_dir, 'flight/desktop/sessions', id, 'metadata.log')
+    path = File.join(cache_dir, 'flight/desktop/sessions', id, 'metadata.yml')
     self.created_at ||= File::Stat.new(path).ctime
   end
 
