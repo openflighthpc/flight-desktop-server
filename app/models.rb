@@ -141,6 +141,10 @@ class Session < Hashie::Trash
     end
   end
 
+  def load_screenshot
+    self.screenshot = Screenshot.new(self).read || false
+  end
+
   def to_json
     as_json.to_json
   end
@@ -157,7 +161,7 @@ class Session < Hashie::Trash
       'created_at' => created_at.rfc3339,
       'last_accessed_at' => last_accessed_at&.rfc3339
     }.tap do |h|
-      h['screenshot'] = screenshot if screenshot
+      h['screenshot'] = Base64.encode64 screenshot if screenshot
       h['screenshot'] = nil if screenshot == false
     end
   end
@@ -256,13 +260,13 @@ Screenshot = Struct.new(:session) do
     Base64.encode64(read)
   end
 
+  def read!
+    read || raise(NotFound.new(id: session.id, type: 'screenshot'))
+  end
+
   def read
     p = self.class.path(session.user, session.id)
-    if File.exists?(p)
-      File.read(p)
-    else
-      raise NotFound.new(id: session.id, type: 'screenshot')
-    end
+    File.exists?(p) ? File.read(p) : nil
   end
 end
 

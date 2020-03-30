@@ -164,7 +164,7 @@ namespace '/sessions' do
   get do
     {
       'data' => Session.index(user: current_user)
-                       .each { |s| s.screenshot = false if include_screenshot? }
+                       .each { |s| s.load_screenshot if include_screenshot? }
     }.to_json
   end
 
@@ -188,12 +188,13 @@ namespace '/sessions' do
     end
 
     get do
-      current_session.to_json
+      current_session.tap { |s| s.load_screenshot if include_screenshot? }
+                     .to_json
     end
 
     get '/screenshot.png' do
       content_type 'image/png'
-      Screenshot.new(current_session).read
+      Screenshot.new(current_session).read!
     end
 
     delete do
