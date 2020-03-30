@@ -33,6 +33,7 @@ class Session < Hashie::Trash
   include Hashie::Extensions::Dash::Coercion
 
   def self.index(user:)
+    cache_dir = SystemCommand::Handlers.load_cache_dir(user: user)
     cmd = SystemCommand.index_sessions(user: user)
     if cmd.success?
       cmd.stdout.split("\n").map do |line|
@@ -46,7 +47,8 @@ class Session < Hashie::Trash
           webport: parts[6],
           password: parts[7],
           state: parts[8],
-          user: user
+          user: user,
+          cache_dir: cache_dir
         )
       end
     else
@@ -120,17 +122,15 @@ class Session < Hashie::Trash
 
   def self.loader(*a)
     new(*a).tap do |session|
-      session.load_created_at unless session.load_created_at
+      session.cache_dir ||= SystemCommand::Handlers.load_cache_dir(user: session.user)
+      session.created_at ||= begin
+        path = File.join(session.cache_dir,
+                         'flight/desktop/sessions',
+                         session.id,
+                         'metadata.yml')
+        File::Stat.new(path).ctime
+      end
     end
-  end
-
-  def load_created_at
-    cache_dir =  SystemCommand.echo_cache_dir(user: user)
-                              .tap(&:raise_unless_successful)
-                              .stdout
-                              .chomp
-    path = File.join(cache_dir, 'flight/desktop/sessions', id, 'metadata.yml')
-    self.created_at ||= File::Stat.new(path).ctime
   end
 
   def to_json
