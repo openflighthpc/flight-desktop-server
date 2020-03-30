@@ -33,10 +33,6 @@ class Session < Hashie::Trash
   include Hashie::Extensions::Dash::Coercion
 
   def self.index(user:)
-    cache_dir =  SystemCommand.echo_cache_dir(user: user)
-                              .tap(&:raise_unless_successful)
-                              .stdout
-                              .chomp
     cmd = SystemCommand.index_sessions(user: user)
     if cmd.success?
       cmd.stdout.split("\n").map do |line|
@@ -120,6 +116,24 @@ class Session < Hashie::Trash
   property :state
   property :created_at, coerce: Time
   property :last_accessed_at, coerce: Time
+  property :cache_dir
+
+  def initialize(*_)
+    super
+    unless self.created_at && self.last_accessed_at
+      cache_dir =  SystemCommand.echo_cache_dir(user: user)
+                                .tap(&:raise_unless_successful)
+                                .stdout
+                                .chomp
+      self.created_at ||= begin
+        path = File.join(cache_dir, 'flight/desktop/sessions', id, 'metadata.log')
+        File::Stat.new(path).ctime
+      end
+    end
+  end
+
+  def meta_path
+  end
 
   def to_json
     as_json.to_json
@@ -133,7 +147,8 @@ class Session < Hashie::Trash
       'hostname' => hostname,
       'port' => webport,
       'password' => password,
-      'state' => state
+      'state' => state,
+      'created_at' => created_at.rfc3339
     }
   end
 

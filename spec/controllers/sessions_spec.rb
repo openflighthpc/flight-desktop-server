@@ -34,14 +34,18 @@ RSpec.describe '/sessions' do
   let(:url_id) { raise NotImplementedError, 'the spec :url_id has not been set' }
   let(:sessions) { raise NotImplementedError, 'the spec has not defined sessions' }
 
-  def meta_path(id)
-    File.join(cache_dir, 'flight/desktop/sessions', id, 'metadata.log')
+  def build_session(**opts)
+    raise 'missing id' unless opts[:id]
+    opts[:created_at] ||= begin
+      path = File.join(cache_dir, 'flight/desktop/sessions', opts[:id], 'metadata.log')
+      FileUtils.mkdir_p(File.dirname(path))
+      FileUtils.touch(path)
+      File::Stat.new(path).ctime
+    end
+    Session.new(**opts)
   end
 
-  let(:cache_dir) { "/home/#{username}/.cache" }
-
-  let(:successful_cache_dir_stub) do
-    SystemCommand.new(stderr: '', code: 0, stdout: "#{cache_dir}\n")
+  def meta_path(id)
   end
 
   let(:successful_find_stub) do
@@ -60,14 +64,6 @@ RSpec.describe '/sessions' do
 
   let(:index_multiple_stub) do
     raise 'FakeFS is not activated!' unless FakeFS.activated?
-    sessions.each do |session|
-      path = meta_path(session.id)
-      FileUtils.mkdir_p(File.dirname(path))
-      FileUtils.touch(path)
-      stat = File::Stat.new(path)
-      session.created_at = stat.birthtime
-      session.last_accessed_at = stat.ctime
-    end
     stdout = sessions.each_with_index.map do |s, idx|
       "#{s.id}\t#{s.desktop}\t#{s.hostname}\t#{s.ip}\t#{idx}\t#{s.port}\t#{s.webport}\t#{s.password}\t#{s.state}"
     end.join("\n")
@@ -75,15 +71,12 @@ RSpec.describe '/sessions' do
   end
 
   shared_examples 'sessions error when missing' do
-    around { |e| FakeFS.with { e.call } }
-
     context 'when the command fails' do
       let(:url_id) { 'missing' }
 
       before do
         # NOTE: "Temporarily" out of use
         # allow(SystemCommand).to receive(:find_session).and_return(exit_213_stub)
-        allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(exit_213_stub)
         make_request
       end
@@ -102,7 +95,7 @@ RSpec.describe '/sessions' do
       let(:url_id) { '6bbf0bcf-4ac0-4d09-af10-ceef1527c087' }
 
       let(:other1) do
-        Session.new(
+        build_session(
           id: "a3207f38-40ed-48df-9a59-4b54f840ced1",
           desktop: "gnome",
           ip: '10.1.1.1',
@@ -115,7 +108,7 @@ RSpec.describe '/sessions' do
       end
 
       let(:other2) do
-        Session.new(
+        build_session(
           id: "2b29efce-2717-45f1-a982-f090cdbf7435",
           desktop: "gnome",
           ip: '10.1.1.2',
@@ -130,7 +123,6 @@ RSpec.describe '/sessions' do
       let(:sessions) { [other1, other2] }
 
       before do
-        allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         make_request
       end
@@ -149,7 +141,6 @@ RSpec.describe '/sessions' do
 
     context 'without any running sessions' do
       before do
-        allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(exit_0_stub)
         make_request
       end
@@ -165,7 +156,6 @@ RSpec.describe '/sessions' do
 
     context 'when the index system command fails' do
       before do
-        allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(exit_213_stub)
         make_request
       end
@@ -208,13 +198,10 @@ RSpec.describe '/sessions' do
             password: '5wroliv5',
             state: 'Active'
           }
-        ].map { |h| Session.new(**h) }
+        ].map { |h| build_session(**h) }
       end
 
-      around { |e| FakeFS.with { e.call } }
-
       before do
-        allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         make_request
       end
@@ -238,7 +225,7 @@ RSpec.describe '/sessions' do
       let(:id) { '3d17d06e-701a-11ea-a14f-52540005505a' }
 
       before do
-        allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
+        build_session(id: id) # Dummy method call to create the metafile
         allow(SystemCommand).to receive(:index_sessions).and_return(broken_index_stub)
         make_request
       end
@@ -249,6 +236,7 @@ RSpec.describe '/sessions' do
 
       it 'returns a empty-ish response' do
         data = parse_last_response_body.data.first.reject { |_, v| v.nil? }
+        data.delete('created_at')
         expect(data.delete('id')).to eq(id)
         expect(data.delete('state')).to eq('Broken')
         expect(data).to be_empty
@@ -266,7 +254,7 @@ RSpec.describe '/sessions' do
 
     context 'with a stubbed existing session' do
       subject do
-        Session.new(
+        build_session(
           id: "11a8e4a1-9371-4b60-8d00-20441a4f2612",
           desktop: "gnome",
           ip: '10.1.0.1',
@@ -279,7 +267,7 @@ RSpec.describe '/sessions' do
       end
 
       let(:other1) do
-        Session.new(
+        build_session(
           id: "d5255917-c8c3-4d00-bf1c-546445f8956f",
           desktop: "gnome",
           ip: '10.1.0.2',
@@ -292,7 +280,7 @@ RSpec.describe '/sessions' do
       end
 
       let(:other2) do
-        Session.new(
+        build_session(
           id: "dc17e3d0-ed68-493f-a7ec-5029310cd0f6",
           desktop: "gnome",
           ip: '10.1.0.3',
@@ -306,12 +294,9 @@ RSpec.describe '/sessions' do
 
       let(:sessions) { [other1, subject, other2] }
 
-      around { |e| FakeFS.with { e.call } }
-
       before do
         # NOTE: "Temporarily" out of use
         # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
-        allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         make_request
       end
@@ -351,7 +336,7 @@ RSpec.describe '/sessions' do
 
     context 'with a missing screenshot' do
       subject do
-        Session.new(
+        build_session(
           id: "72e2f8d3-dea5-465c-b8d5-67336c7f8680",
           desktop: "xfce",
           ip: '10.101.0.4',
@@ -367,14 +352,11 @@ RSpec.describe '/sessions' do
 
       let(:url_id) { subject.id }
 
-      around { |e| FakeFS.with { e.call } }
-
       it 'returns 404' do
         # NOTE: "Temporarily" out of use
         # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
-        allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
-        expect(Screenshot).to receive(:path).with(username, url_id)
+        expect(Screenshot).to receive(:path).with(username, url_id).and_call_original
         make_request
         expect(last_response).to be_not_found
       end
@@ -382,7 +364,7 @@ RSpec.describe '/sessions' do
 
     context 'when getting the cache directory fails' do
       subject do
-        Session.new(
+        build_session(
           id: "72e2f8d3-dea5-465c-b8d5-67336c7f8680",
           desktop: "xfce",
           ip: '10.101.0.4',
@@ -398,8 +380,6 @@ RSpec.describe '/sessions' do
 
       let(:url_id) { subject.id }
 
-      around { |e| FakeFS.with { e.call } }
-
       it 'returns 500' do
         # NOTE: "Temporarily" out of use
         # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
@@ -412,7 +392,7 @@ RSpec.describe '/sessions' do
 
     context 'with a existing screenshot' do
       subject do
-        Session.new(
+        build_session(
           id: "6d1f1937-3812-486b-9bfb-38c3c85b34e9",
           desktop: "kde",
           ip: '10.101.0.5',
@@ -437,13 +417,10 @@ RSpec.describe '/sessions' do
 
       let(:url_id) { subject.id }
 
-      around { |e| FakeFS.with { e.call } }
-
       before do
         # NOTE: "Temporarily" out of use
         # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
-        allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         path = Screenshot.path(username, subject.id)
         FileUtils.mkdir_p(File.dirname path)
         File.write(path, screenshot)
@@ -566,7 +543,7 @@ RSpec.describe '/sessions' do
 
     context 'when creating a verified desktop session' do
       subject do
-        Session.new(
+        build_session(
           id: '3335bb08-8d91-40fd-a973-da05bdbf3636',
           desktop: desktop,
           ip: '10.1.0.2',
@@ -686,7 +663,7 @@ RSpec.describe '/sessions' do
 
     context 'when an unverified desktop cache status is incorrect and verification fails' do
       subject do
-        Session.new(
+        build_session(
           id: '9633d854-1790-43b2-bf06-f6dc46bb4859',
           desktop: desktop,
           ip: '10.1.0.3',
@@ -718,7 +695,7 @@ RSpec.describe '/sessions' do
 
     context 'when verifing a desktop command succeeds and the retry also succeeds' do
       subject do
-        Session.new(
+        build_session(
           id: '9633d854-1790-43b2-bf06-f6dc46bb4859',
           desktop: desktop,
           ip: '10.1.0.3',
@@ -762,7 +739,7 @@ RSpec.describe '/sessions' do
 
   describe 'DELETE /session/:id' do
     subject do
-      Session.new(
+      build_session(
         id: 'ed36dedb-5003-4765-b8dc-0c1cc2922dd7',
         desktop: 'gnome',
         ip: '10.1.0.4',
@@ -786,12 +763,9 @@ RSpec.describe '/sessions' do
     include_examples 'sessions error when missing'
 
     context 'when the kill succeeds' do
-      around { |e| FakeFS.with { e.call } }
-
       before do
         # NOTE: "Temporarily" out of use
         # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
-        allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         allow(SystemCommand).to receive(:kill_session).and_return(exit_0_stub)
         make_request
@@ -807,12 +781,9 @@ RSpec.describe '/sessions' do
     end
 
     context 'when the kill fails' do
-      around { |e| FakeFS.with { e.call } }
-
       before do
         # NOTE: "Temporarily" out of use
         # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
-        allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         allow(SystemCommand).to receive(:kill_session).and_return(exit_213_stub)
         make_request
