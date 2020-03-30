@@ -32,6 +32,7 @@ return if Figaro.env.RACK_ENV! == 'test'
 
 # Periodically reload and verify the desktops
 Thread.new do
+  count = 0
   loop do
     models = SystemCommand.avail_desktops(user: Figaro.env.USER!)
                           .tap(&:raise_unless_successful)
@@ -44,6 +45,8 @@ Thread.new do
     hash = models.map { |m| [m.name, m] }.to_h
 
     Desktop.instance_variable_set(:@cache, hash)
+    DEFAULT_LOGGER.info "Finished #{'re' if count > 0 }loading the desktops"
+    count += 1
 
     sleep Figaro.env.refresh_rate!.to_i
   end
