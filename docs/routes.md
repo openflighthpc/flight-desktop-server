@@ -106,7 +106,9 @@ HTTP/2 200 OK
   "hostname": "<hostname>",
   "port": <web-sockify-port>,
   "password": "<vnc-password>",
-  "state": "<Active|BROKEN|...>"
+  "state": "<Active|BROKEN|...>",
+  "created_at": "<time-rfc339>",
+  "last_accessed_at": "<None|time-rfc3339>"
 }
 ```
 
@@ -147,6 +149,18 @@ Type: String
 The "state" the session is currently in
 
 Type: String
+
+*created_at*
+
+The time the session was created
+
+Type: [RFC3339 Timestamp](https://tools.ietf.org/html/rfc3339)
+
+*last_accessed_at*
+
+The time the session was last accessed. This field MAY be None if the session has not yet be accessed.
+
+Type: None | [RFC3339 Timestamp](https://tools.ietf.org/html/rfc3339)
 
 #### Other Responses
 
