@@ -130,6 +130,13 @@ class Session < Hashie::Trash
                          'metadata.yml')
         File::Stat.new(path).ctime
       end
+      session.last_accessed_at ||= begin
+        path = File.join(session.cache_dir,
+                         'flight/desktop/sessions',
+                         session.id,
+                         'session.log')
+        File::Stat.new(path).ctime if File.exists? path
+      end
     end
   end
 
@@ -146,7 +153,8 @@ class Session < Hashie::Trash
       'port' => webport,
       'password' => password,
       'state' => state,
-      'created_at' => created_at.rfc3339
+      'created_at' => created_at.rfc3339,
+      'last_accessed_at' => last_accessed_at&.rfc3339
     }
   end
 

@@ -166,9 +166,26 @@ RSpec.describe '/sessions' do
     end
 
     context 'with multiple running sessions' do
+      let(:screenshot_session) do
+        build_session(
+          id: '135c07c2-5c9f-4e32-9372-a408d2bbe621',
+          desktop: 'xfce',
+          hostname: 'example.com',
+          ip: '10.101.0.3',
+          port: 5903,
+          webport: 41303,
+          password: '5wroliv5',
+          state: 'Active'
+        ).tap do |sesh|
+          path = File.join(cache_dir, 'flight/desktop/sessions', sesh.id, 'session.log')
+          FileUtils.touch path
+          sesh.last_accessed_at = File::Stat.new(path).ctime
+        end
+      end
+
       let(:sessions) do
         [
-          {
+          build_session(
             id: '0362d58b-f29a-4b99-9a0a-277c902daa55',
             desktop: 'gnome',
             hostname: 'example.com',
@@ -177,8 +194,8 @@ RSpec.describe '/sessions' do
             webport: 41301,
             password: 'GovCosh6',
             state: 'Active'
-          },
-          {
+          ),
+          build_session(
             id: '135036a4-0471-4014-ab56-7b65648895df',
             desktop: 'kde',
             hostname: 'example.com',
@@ -187,18 +204,9 @@ RSpec.describe '/sessions' do
             webport: 41302,
             password: 'Dinzeph3',
             state: 'Active'
-          },
-          {
-            id: '135c07c2-5c9f-4e32-9372-a408d2bbe621',
-            desktop: 'xfce',
-            hostname: 'example.com',
-            ip: '10.101.0.3',
-            port: 5903,
-            webport: 41303,
-            password: '5wroliv5',
-            state: 'Active'
-          }
-        ].map { |h| build_session(**h) }
+          ),
+          screenshot_session
+        ]
       end
 
       before do
