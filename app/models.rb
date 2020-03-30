@@ -119,6 +119,7 @@ class Session < Hashie::Trash
   property :created_at, coerce: Time
   property :last_accessed_at, coerce: Time
   property :cache_dir
+  property :screenshot
 
   def self.loader(*a)
     new(*a).tap do |session|
@@ -155,7 +156,10 @@ class Session < Hashie::Trash
       'state' => state,
       'created_at' => created_at.rfc3339,
       'last_accessed_at' => last_accessed_at&.rfc3339
-    }
+    }.tap do |h|
+      h['screenshot'] = screenshot if screenshot
+      h['screenshot'] = nil if screenshot == false
+    end
   end
 
   def kill(user:)

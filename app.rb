@@ -155,10 +155,17 @@ namespace '/sessions' do
         raise NotFound.new(type: 'desktop', id: desktop_param) unless d
       end
     end
+
+    def include_screenshot?
+      params[:include] == 'screenshot'
+    end
   end
 
   get do
-    { 'data' => Session.index(user: current_user) }.to_json
+    {
+      'data' => Session.index(user: current_user)
+                       .each { |s| s.screenshot = false if include_screenshot? }
+    }.to_json
   end
 
   post do

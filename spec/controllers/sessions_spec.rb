@@ -28,24 +28,36 @@
 #===============================================================================
 
 require 'spec_helper'
+require 'securerandom'
 
 RSpec.describe '/sessions' do
   subject { raise NotImplementedError, 'the spec has not defined its subject' }
   let(:url_id) { raise NotImplementedError, 'the spec :url_id has not been set' }
   let(:sessions) { raise NotImplementedError, 'the spec has not defined sessions' }
 
+  AUTO_DESKTOP = (0..10).map { |i| "desktop#{i}" }
+
   def build_session(**opts)
-    raise 'missing id' unless opts[:id]
+    last_ip = rand(0..255)
+
+    # Generate a random ish session
+    opts[:id] ||= SecureRandom.uuid
+    opts[:password] ||= SecureRandom.uuid.split('-').first
+    opts[:desktop] ||= AUTO_DESKTOP.sample
+    opts[:ip] ||= "10.10.#{rand(0..255)}.#{last_ip}"
+    opts[:port] ||= (6000 + last_ip).to_s
+    opts[:webport] ||= (45000 + last_ip).to_s
+
+    # Write the metadata file
     opts[:created_at] ||= begin
       path = File.join(cache_dir, 'flight/desktop/sessions', opts[:id], 'metadata.yml')
       FileUtils.mkdir_p(File.dirname(path))
       FileUtils.touch(path)
       File::Stat.new(path).ctime
     end
-    Session.new(**opts)
-  end
 
-  def meta_path(id)
+    # Create the session
+    Session.new(**opts)
   end
 
   let(:successful_find_stub) do
@@ -221,6 +233,10 @@ RSpec.describe '/sessions' do
       it 'returns the sessions as JSON' do
         expect(parse_last_response_body.data).to eq(sessions.as_json)
       end
+
+      it 'does not include the screenshot key' do
+        expect(parse_last_response_body.key?('screenshot')).to be(false)
+      end
     end
 
     context 'with a broken session' do
@@ -248,6 +264,27 @@ RSpec.describe '/sessions' do
         expect(data.delete('id')).to eq(id)
         expect(data.delete('state')).to eq('Broken')
         expect(data).to be_empty
+      end
+    end
+
+    context 'without the requested screenshot' do
+      let(:sessions) do
+        [build_session]
+      end
+
+      before do
+        allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
+        standard_get_headers
+        get '/sessions?include=screenshot'
+      end
+
+      it 'returns 200' do
+        expect(last_response).to be_ok
+      end
+
+      it 'returns the JSON session with a blank screenshot' do
+        expect(parse_last_response_body.data.first).to \
+          eq(sessions.first.as_json.merge("screenshot" => nil))
       end
     end
   end
