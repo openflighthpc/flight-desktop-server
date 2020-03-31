@@ -33,11 +33,12 @@ class Session < Hashie::Trash
   include Hashie::Extensions::Dash::Coercion
 
   def self.index(user:)
+    cache_dir = SystemCommand::Handlers.load_cache_dir(user: user)
     cmd = SystemCommand.index_sessions(user: user)
     if cmd.success?
       cmd.stdout.split("\n").map do |line|
-        parts = line.squish.split(' ')
-        new(
+        parts = line.split("\t").map { |p| p.empty? ? nil : p }
+        loader(
           id: parts[0],
           desktop: parts[1],
           hostname: parts[2],
@@ -45,7 +46,9 @@ class Session < Hashie::Trash
           port: parts[5],
           webport: parts[6],
           password: parts[7],
-          user: user
+          state: parts[8],
+          user: user,
+          cache_dir: cache_dir
         )
       end
     else
@@ -101,7 +104,7 @@ class Session < Hashie::Trash
       end
       memo[key] = value
     end
-    new(user: user, **data)
+    loader(user: user, **data)
   end
 
   property :id
@@ -112,6 +115,30 @@ class Session < Hashie::Trash
   property :webport, coerce: String
   property :password
   property :user
+  property :state
+  property :created_at, coerce: Time
+  property :last_accessed_at, coerce: Time
+  property :cache_dir
+
+  def self.loader(*a)
+    new(*a).tap do |session|
+      session.cache_dir ||= SystemCommand::Handlers.load_cache_dir(user: session.user)
+      session.created_at ||= begin
+        path = File.join(session.cache_dir,
+                         'flight/desktop/sessions',
+                         session.id,
+                         'metadata.yml')
+        File::Stat.new(path).ctime
+      end
+      session.last_accessed_at ||= begin
+        path = File.join(session.cache_dir,
+                         'flight/desktop/sessions',
+                         session.id,
+                         'session.log')
+        File::Stat.new(path).ctime if File.exists? path
+      end
+    end
+  end
 
   def to_json
     as_json.to_json
@@ -124,7 +151,10 @@ class Session < Hashie::Trash
       'ip' => ip,
       'hostname' => hostname,
       'port' => webport,
-      'password' => password
+      'password' => password,
+      'state' => state,
+      'created_at' => created_at.rfc3339,
+      'last_accessed_at' => last_accessed_at&.rfc3339
     }
   end
 

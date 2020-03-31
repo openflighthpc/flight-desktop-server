@@ -105,7 +105,10 @@ HTTP/2 200 OK
   "ip": "<ip>,
   "hostname": "<hostname>",
   "port": <web-sockify-port>,
-  "password": "<vnc-password>"
+  "password": "<vnc-password>",
+  "state": "<Active|BROKEN|...>",
+  "created_at": "<time-rfc339>",
+  "last_accessed_at": "<None|time-rfc3339>"
 }
 ```
 
@@ -141,6 +144,24 @@ The "vnc password" for the session.
 
 Type: String
 
+*state*
+
+The "state" the session is currently in
+
+Type: String
+
+*created_at*
+
+The time the session was created
+
+Type: [RFC3339 Timestamp](https://tools.ietf.org/html/rfc3339)
+
+*last_accessed_at*
+
+The time the session was last accessed. This field MAY be None if the session has not yet be accessed.
+
+Type: None | [RFC3339 Timestamp](https://tools.ietf.org/html/rfc3339)
+
 #### Other Responses
 
 ```
@@ -162,7 +183,7 @@ Content-Type: application/json
 
 Start a new vnc session with the given `desktop` type.
 
-*BUG NOTICE*: The `port` is not currently being returned by the request due to internal limitations. Until such time as this bug is fixed, the port SHOULD be determined using a standard `GET Show` request.
+*BUG NOTICE*: The `port` and `state` MAY not be returned by the request due to internal limitations. The `port`/`state` SHOULD be determined using a standard `GET Show` request.
 
 ```
 POST /sessions

@@ -62,6 +62,15 @@ class SystemCommand < Hashie::Dash
     end
   end
 
+  module Handlers
+    def self.load_cache_dir(user:)
+      SystemCommand.echo_cache_dir(user: user)
+                   .tap(&:raise_unless_successful)
+                   .stdout
+                   .chomp
+    end
+  end
+
   # NOTE: This system command is required to determine the cache directory the screenshot
   # is stored within. This is required as it is specific to each user and most be done
   # as a system call.

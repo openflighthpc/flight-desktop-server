@@ -50,6 +50,8 @@ module SharedSpecContext
   let(:username) { 'default-test-user' }
   let(:password) { 'default-test-password' }
 
+  let(:cache_dir) { "/home/#{username}/.cache" }
+
   def define_desktop(name, verified: true)
     Desktop.new(name: name.to_s, verified: verified).tap do |model|
       Desktop.instance_variable_get(:@cache)[model.name] = model
@@ -101,6 +103,8 @@ RSpec.configure do |c|
     header 'Content-Type', 'application/json'
   end
 
+  c.around { |e| FakeFS.with { e.call } }
+
   c.before do
     # Disable RPAM from running in the spec. This way users don't need configuring
     # It will always return authenticated unless otherwise stubbed
@@ -115,13 +119,10 @@ RSpec.configure do |c|
       ERROR
     end
 
-    # Disable the ability to generate screenshot paths unless FakeFS has been activated
-    # This makes FakeFS mandatory when testing screenshots
-    allow(Screenshot).to receive(:path).and_wrap_original do |method, *a|
-      raise NotImplementedError, <<~ERROR.squish unless FakeFS.activated?
-        FakeFS must be activated when using Screenshot.path
-      ERROR
-      method.call(*a)
+    # Always allow the SystemCommands for the cache directory as they will
+    # likely always succeed [unless something terrible happens]
+    allow(SystemCommand).to receive(:echo_cache_dir).and_wrap_original do
+      SystemCommand.new(stderr: '', code: 0, stdout: "#{cache_dir}\n")
     end
   end
 end
