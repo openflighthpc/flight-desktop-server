@@ -898,12 +898,32 @@ RSpec.describe '/sessions' do
       end
     end
 
-    context 'when the kill fails' do
+    context 'when the kill fails and the clean succeeds' do
       before do
         # NOTE: "Temporarily" out of use
         # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         allow(SystemCommand).to receive(:kill_session).and_return(exit_213_stub)
+        allow(SystemCommand).to receive(:clean_session).and_return(exit_0_stub)
+        make_request
+      end
+
+      it 'returns 204' do
+        expect(last_response).to be_no_content
+      end
+
+      it 'returns an empty body' do
+        expect(last_response.body).to be_empty
+      end
+    end
+
+    context 'when the kill and clean fails' do
+      before do
+        # NOTE: "Temporarily" out of use
+        # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
+        allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
+        allow(SystemCommand).to receive(:kill_session).and_return(exit_213_stub)
+        allow(SystemCommand).to receive(:clean_session).and_return(exit_213_stub)
         make_request
       end
 

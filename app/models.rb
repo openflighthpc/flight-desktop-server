@@ -168,11 +168,10 @@ class Session < Hashie::Trash
 
   def kill(user:)
     cmd = SystemCommand.kill_session(id, user: user)
-    if cmd.success?
-      true
-    else
-      raise InternalServerError.new(details: 'failed to delete the session')
-    end
+    return true if cmd.success?
+    cmd = SystemCommand.clean_session(id, user: user)
+    return true if cmd.success?
+    raise InternalServerError.new(details: 'failed to delete the session')
   end
 end
 
