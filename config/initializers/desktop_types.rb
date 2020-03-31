@@ -37,8 +37,8 @@ Thread.new do
     models = SystemCommand.avail_desktops(user: Figaro.env.USER!)
                           .tap(&:raise_unless_successful)
                           .stdout
-                          .each_line.map do |data|
-      data = l.split("\t")
+                          .each_line.map do |line|
+      data = line.split("\t")
       home = data[2].empty? ? nil : data[2]
       Desktop.new(name: data[0], summary: data[1], homepage: home)
     end
