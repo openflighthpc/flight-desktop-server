@@ -334,7 +334,8 @@ HTTP/2 200 OK
 {
   "id": "<UUID>",
   "verified": <true|false>,
-  "summary": "<summary>"
+  "summary": "<summary>",
+  "homepage": "<home-url>"
 }
 ```
 
@@ -357,6 +358,12 @@ Type: Boolean
 A short description on the desktop
 
 Type: String
+
+*homepage:*
+
+The URL to the desktops homepage when available, otherwise None
+
+Type: None | String - URL
 
 #### Other Responses
 
