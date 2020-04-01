@@ -73,7 +73,7 @@ The `id` for a `sessions` MUST conform to the `UUID` format according to [RFC412
 
 ### GET Index
 
-Return a list of all currently running desktop sessions for the identified user. The `data` attribute MAY be empty.
+Return a list of all currently running desktop sessions for the identified user. The `data` attribute MAY be empty. The `include=screenshot` query parameter SHOULD trigger the base64 encoded screenshot to be returned for each session resource.
 
 ```
 GET /sessions
@@ -89,9 +89,27 @@ HTTP/2 200 OK
 }
 ```
 
+#### Other Responses
+
+To retrieve the screenshot for each session:
+
+```
+GET /sessions?include=screenshot
+Authorization: Basic <base64 encoded username:password>
+Accepts: application/json
+
+HTTP/2 200 OK
+{
+  "data": [
+    <session-resource-object-with-screenshot>,
+    ...
+  ]
+}
+```
+
 ### GET Show
 
-Returns an instance of a running session.
+Returns an instance of a running session. The `include=screenshot` query parameter SHOULD trigger the base64 encoded screenshot to be returned with the request.
 
 ```
 GET /sessions/:id
@@ -105,7 +123,22 @@ HTTP/2 200 OK
   "ip": "<ip>,
   "hostname": "<hostname>",
   "port": <web-sockify-port>,
-  "password": "<vnc-password>"
+  "password": "<vnc-password>",
+  "state": "<Active|BROKEN|...>",
+  "created_at": "<time-rfc339>",
+  "last_accessed_at": "<None|time-rfc3339>"
+}
+
+# When the screenshot is included
+
+GET /sessions/:id?include=screenshot
+Authorization: Basic <base64 encoded username:password>
+Accepts: application/json
+
+HTTP/2 200 OK
+{
+  ... as above ...,
+  "screenshot": "<Base64 encoded sceenshot>"
 }
 ```
 
@@ -141,6 +174,30 @@ The "vnc password" for the session.
 
 Type: String
 
+*state*
+
+The "state" the session is currently in
+
+Type: String
+
+*created_at*
+
+The time the session was created
+
+Type: [String - RFC3339 Timestamp](https://tools.ietf.org/html/rfc3339)
+
+*last_accessed_at*
+
+The time the session was last accessed. This field MAY be None if the session has not yet be accessed.
+
+Type: None | [String - RFC3339 Timestamp](https://tools.ietf.org/html/rfc3339)
+
+*screenshot*
+
+Returns the base64 encoded screenshot. The `included=snapshot` query parameter is REQUIRED for this attribute to be returned. It MUST return None when the snapshot does not exist.
+
+Type: None | String - image/png;base64
+
 #### Other Responses
 
 ```
@@ -162,7 +219,7 @@ Content-Type: application/json
 
 Start a new vnc session with the given `desktop` type.
 
-*BUG NOTICE*: The `port` is not currently being returned by the request due to internal limitations. Until such time as this bug is fixed, the port SHOULD be determined using a standard `GET Show` request.
+*BUG NOTICE*: The `port` and `state` MAY not be returned by the request due to internal limitations. The `port`/`state` SHOULD be determined using a standard `GET Show` request.
 
 ```
 POST /sessions
@@ -277,7 +334,8 @@ HTTP/2 200 OK
 {
   "id": "<UUID>",
   "verified": <true|false>,
-  "summary": "<summary>"
+  "summary": "<summary>",
+  "homepage": "<home-url>"
 }
 ```
 
@@ -300,6 +358,12 @@ Type: Boolean
 A short description on the desktop
 
 Type: String
+
+*homepage:*
+
+The URL to the desktops homepage when available, otherwise None
+
+Type: None | String - URL
 
 #### Other Responses
 

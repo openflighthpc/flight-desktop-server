@@ -28,11 +28,46 @@
 #===============================================================================
 
 require 'spec_helper'
+require 'securerandom'
 
 RSpec.describe '/sessions' do
   subject { raise NotImplementedError, 'the spec has not defined its subject' }
   let(:url_id) { raise NotImplementedError, 'the spec :url_id has not been set' }
   let(:sessions) { raise NotImplementedError, 'the spec has not defined sessions' }
+
+  AUTO_DESKTOP = (0..10).map { |i| "desktop#{i}" }
+
+  def build_session(**opts)
+    opts = opts.dup
+
+    last_ip = rand(0..255)
+
+    # Generate a random ish session
+    opts[:id] ||= SecureRandom.uuid
+    opts[:password] ||= SecureRandom.uuid.split('-').first
+    opts[:desktop] ||= AUTO_DESKTOP.sample
+    opts[:ip] ||= "10.10.#{rand(0..255)}.#{last_ip}"
+    opts[:port] ||= (6000 + last_ip).to_s
+    opts[:webport] ||= (45000 + last_ip).to_s
+
+    # Writes the screenshot
+    if opts.delete(:screenshot)
+      path = Screenshot.path(username, opts[:id])
+      FileUtils.mkdir_p File.dirname(path)
+      File.write path, screenshot_content
+    end
+
+    # Write the metadata file
+    opts[:created_at] ||= begin
+      path = File.join(cache_dir, 'flight/desktop/sessions', opts[:id], 'metadata.yml')
+      FileUtils.mkdir_p(File.dirname(path))
+      FileUtils.touch(path)
+      File::Stat.new(path).ctime
+    end
+
+    # Create the session
+    Session.new(**opts)
+  end
 
   let(:successful_find_stub) do
     SystemCommand.new(
@@ -49,11 +84,23 @@ RSpec.describe '/sessions' do
   end
 
   let(:index_multiple_stub) do
+    raise 'FakeFS is not activated!' unless FakeFS.activated?
     stdout = sessions.each_with_index.map do |s, idx|
-      "#{s.id}    #{s.desktop}   #{s.hostname} #{s.ip}     #{idx}       #{s.port}    #{s.webport}   #{s.password}        Active"
+      "#{s.id}\t#{s.desktop}\t#{s.hostname}\t#{s.ip}\t#{idx}\t#{s.port}\t#{s.webport}\t#{s.password}\t#{s.state}"
     end.join("\n")
     SystemCommand.new(stdout: stdout, stderr: '', code: 0)
   end
+
+  let(:screenshot_content) do
+    <<~SCREEN
+      A `bunch`, of "random" characters! &&**?><>}{[]££""''
+      ++**--!!"!£"$^£&"£$£"$%$&**()()?<>~@:{}@~}{@{{P
+
+      ¯\_(ツ)_/¯
+    SCREEN
+  end
+
+  let(:screenshot_content_base64) { Base64.encode64(screenshot_content) }
 
   shared_examples 'sessions error when missing' do
     context 'when the command fails' do
@@ -80,26 +127,28 @@ RSpec.describe '/sessions' do
       let(:url_id) { '6bbf0bcf-4ac0-4d09-af10-ceef1527c087' }
 
       let(:other1) do
-        Session.new(
+        build_session(
           id: "a3207f38-40ed-48df-9a59-4b54f840ced1",
           desktop: "gnome",
           ip: '10.1.1.1',
           hostname: 'example.com',
           port: 5923,
           webport: 41401,
-          password: 'b187668d'
+          password: 'b187668d',
+          state: 'Active'
         )
       end
 
       let(:other2) do
-        Session.new(
+        build_session(
           id: "2b29efce-2717-45f1-a982-f090cdbf7435",
           desktop: "gnome",
           ip: '10.1.1.2',
           hostname: 'example.com',
           port: 5924,
           webport: 41402,
-          password: '8b17ba61'
+          password: '8b17ba61',
+          state: 'Active'
         )
       end
 
@@ -149,36 +198,47 @@ RSpec.describe '/sessions' do
     end
 
     context 'with multiple running sessions' do
+      let(:screenshot_session) do
+        build_session(
+          id: '135c07c2-5c9f-4e32-9372-a408d2bbe621',
+          desktop: 'xfce',
+          hostname: 'example.com',
+          ip: '10.101.0.3',
+          port: 5903,
+          webport: 41303,
+          password: '5wroliv5',
+          state: 'Active'
+        ).tap do |sesh|
+          path = File.join(cache_dir, 'flight/desktop/sessions', sesh.id, 'session.log')
+          FileUtils.touch path
+          sesh.last_accessed_at = File::Stat.new(path).ctime
+        end
+      end
+
       let(:sessions) do
         [
-          {
+          build_session(
             id: '0362d58b-f29a-4b99-9a0a-277c902daa55',
             desktop: 'gnome',
             hostname: 'example.com',
             ip: '10.101.0.1',
             port: 5901,
             webport: 41301,
-            password: 'GovCosh6'
-          },
-          {
+            password: 'GovCosh6',
+            state: 'Active'
+          ),
+          build_session(
             id: '135036a4-0471-4014-ab56-7b65648895df',
             desktop: 'kde',
             hostname: 'example.com',
             ip: '10.101.0.2',
             port: 5902,
             webport: 41302,
-            password: 'Dinzeph3'
-          },
-          {
-            id: '135c07c2-5c9f-4e32-9372-a408d2bbe621',
-            desktop: 'xfce',
-            hostname: 'example.com',
-            ip: '10.101.0.3',
-            port: 5903,
-            webport: 41303,
-            password: '5wroliv5'
-          }
-        ].map { |h| Session.new(**h) }
+            password: 'Dinzeph3',
+            state: 'Active'
+          ),
+          screenshot_session
+        ]
       end
 
       before do
@@ -193,6 +253,76 @@ RSpec.describe '/sessions' do
       it 'returns the sessions as JSON' do
         expect(parse_last_response_body.data).to eq(sessions.as_json)
       end
+
+      it 'does not include the screenshot key' do
+        expect(parse_last_response_body.key?('screenshot')).to be(false)
+      end
+    end
+
+    context 'with a broken session' do
+      let(:broken_index_stub) do
+        SystemCommand.new(stderr: '', code: 0, stdout: <<~STDOUT)
+          #{id}\t\t\t\t\t\t\t\tBroken\n
+        STDOUT
+      end
+
+      let(:id) { '3d17d06e-701a-11ea-a14f-52540005505a' }
+
+      before do
+        build_session(id: id) # Dummy method call to create the metafile
+        allow(SystemCommand).to receive(:index_sessions).and_return(broken_index_stub)
+        make_request
+      end
+
+      it 'returns 200' do
+        expect(last_response).to be_ok
+      end
+
+      it 'returns a empty-ish response' do
+        data = parse_last_response_body.data.first.reject { |_, v| v.nil? }
+        data.delete('created_at')
+        expect(data.delete('id')).to eq(id)
+        expect(data.delete('state')).to eq('Broken')
+        expect(data).to be_empty
+      end
+    end
+  end
+
+  context 'GET /sessions?include=snapshot' do
+    let(:sessions) { [subject] }
+
+    def make_request
+      allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
+      standard_get_headers
+      get '/sessions?include=screenshot'
+    end
+
+    context 'without the screenshot' do
+      subject { build_session }
+      before { make_request }
+
+      it 'returns 200' do
+        expect(last_response).to be_ok
+      end
+
+      it 'returns the JSON session with a blank screenshot' do
+        expect(parse_last_response_body.data.first).to \
+          eq(sessions.first.as_json.merge("screenshot" => nil))
+      end
+    end
+
+    context 'with the screenshot' do
+      subject { build_session(screenshot: true) }
+      before { make_request }
+
+      it 'returns 200' do
+        expect(last_response).to be_ok
+      end
+
+      it 'returns the JSON session with a blank screenshot' do
+        expect(parse_last_response_body.data.first).to \
+          eq(sessions.first.as_json.merge("screenshot" => screenshot_content_base64))
+      end
     end
   end
 
@@ -206,38 +336,41 @@ RSpec.describe '/sessions' do
 
     context 'with a stubbed existing session' do
       subject do
-        Session.new(
+        build_session(
           id: "11a8e4a1-9371-4b60-8d00-20441a4f2612",
           desktop: "gnome",
           ip: '10.1.0.1',
           hostname: 'example.com',
           port: 5956,
           webport: 41304,
-          password: '97InM80d'
+          password: '97InM80d',
+          state: 'Active'
         )
       end
 
       let(:other1) do
-        Session.new(
+        build_session(
           id: "d5255917-c8c3-4d00-bf1c-546445f8956f",
           desktop: "gnome",
           ip: '10.1.0.2',
           hostname: 'example.com',
           port: 5957,
           webport: 41305,
-          password: 'df18bb48'
+          password: 'df18bb48',
+          state: 'Active'
         )
       end
 
       let(:other2) do
-        Session.new(
+        build_session(
           id: "dc17e3d0-ed68-493f-a7ec-5029310cd0f6",
           desktop: "gnome",
           ip: '10.1.0.3',
           hostname: 'example.com',
           port: 5957,
           webport: 41306,
-          password: 'a8fd740d'
+          password: 'a8fd740d',
+          state: 'Active'
         )
       end
 
@@ -275,28 +408,66 @@ RSpec.describe '/sessions' do
     end
   end
 
+  describe 'GET /sessions/:id?include=snapshot' do
+    let(:sessions) { [subject] }
+
+    def make_request
+      allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
+      standard_get_headers
+      get "/sessions/#{subject.id}?include=screenshot"
+    end
+
+    context 'when the snapshot is missing' do
+      subject { build_session }
+      before { make_request }
+
+      it 'returns ok' do
+        expect(last_response).to be_ok
+      end
+
+      it 'returns as JSON with a blanks screenshot' do
+        expect(parse_last_response_body).to \
+          eq(subject.as_json.merge('screenshot' => nil))
+      end
+    end
+
+    context 'with an existing screenshot' do
+      subject { build_session(screenshot: true) }
+      before do
+        File.write(Screenshot.path(username, subject.id), screenshot_content)
+        make_request
+      end
+
+      it 'returns ok' do
+        expect(last_response).to be_ok
+      end
+
+      it 'returns as JSON with a blanks screenshot' do
+        expect(parse_last_response_body).to \
+          eq(subject.as_json.merge('screenshot' => screenshot_content_base64))
+      end
+    end
+  end
+
   describe 'GET /sessions/:id/screenshot.png' do
     def make_request
       standard_get_headers
       get "/sessions/#{url_id}/screenshot.png"
     end
 
-    let(:successful_cache_dir_stub) do
-      SystemCommand.new(stderr: '', code: 0, stdout: "/home/#{username}/.cache\n")
-    end
-
     include_examples 'sessions error when missing'
 
     context 'with a missing screenshot' do
       subject do
-        Session.new(
+        build_session(
           id: "72e2f8d3-dea5-465c-b8d5-67336c7f8680",
           desktop: "xfce",
           ip: '10.101.0.4',
           hostname: 'example.com',
           port: 5942,
           webport: 41307,
-          password: 'b74fbb5d'
+          password: 'b74fbb5d',
+          state: 'Active'
         )
       end
 
@@ -308,23 +479,23 @@ RSpec.describe '/sessions' do
         # NOTE: "Temporarily" out of use
         # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
-        allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
-        expect(Screenshot).to receive(:path).with(username, url_id)
-        FakeFS.with { make_request }
+        expect(Screenshot).to receive(:path).with(username, url_id).and_call_original
+        make_request
         expect(last_response).to be_not_found
       end
     end
 
     context 'when getting the cache directory fails' do
       subject do
-        Session.new(
+        build_session(
           id: "72e2f8d3-dea5-465c-b8d5-67336c7f8680",
           desktop: "xfce",
           ip: '10.101.0.4',
           hostname: 'example.com',
           port: 5942,
           webport: 41308,
-          password: 'b74fbb5d'
+          password: 'b74fbb5d',
+          state: 'Active'
         )
       end
 
@@ -337,33 +508,29 @@ RSpec.describe '/sessions' do
         # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         allow(SystemCommand).to receive(:echo_cache_dir).and_return(exit_213_stub)
-        FakeFS.with { make_request }
+        make_request
         expect(last_response.status).to be(500)
       end
     end
 
     context 'with a existing screenshot' do
       subject do
-        Session.new(
+        build_session(
           id: "6d1f1937-3812-486b-9bfb-38c3c85b34e9",
           desktop: "kde",
           ip: '10.101.0.5',
           hostname: 'example.com',
           port: 5944,
           webport: 41309,
-          password: '29d20f04'
+          password: '29d20f04',
+          state: 'Active'
         )
       end
 
       let(:sessions) { [subject] }
 
       let(:screenshot) do
-        <<~SCREEN
-          A `bunch`, of "random" characters! &&**?><>}{[]££""''
-          ++**--!!"!£"$^£&"£$£"$%$&**()()?<>~@:{}@~}{@{{P
-
-          ¯\_(ツ)_/¯
-        SCREEN
+        screenshot_content
       end
 
       let(:url_id) { subject.id }
@@ -372,13 +539,10 @@ RSpec.describe '/sessions' do
         # NOTE: "Temporarily" out of use
         # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
-        allow(SystemCommand).to receive(:echo_cache_dir).and_return(successful_cache_dir_stub)
-        FakeFS.with do
-          path = Screenshot.path(username, subject.id)
-          FileUtils.mkdir_p(File.dirname path)
-          File.write(path, screenshot)
-          make_request
-        end
+        path = Screenshot.path(username, subject.id)
+        FileUtils.mkdir_p(File.dirname path)
+        File.write(path, screenshot)
+        make_request
       end
 
       it 'returns 200' do
@@ -497,14 +661,15 @@ RSpec.describe '/sessions' do
 
     context 'when creating a verified desktop session' do
       subject do
-        Session.new(
+        build_session(
           id: '3335bb08-8d91-40fd-a973-da05bdbf3636',
           desktop: desktop,
           ip: '10.1.0.2',
           hostname: 'example.com',
           port: 5905,
           webport: 41310,
-          password: 'WakofEb6'
+          password: 'WakofEb6',
+          state: 'Active'
         )
       end
 
@@ -521,11 +686,11 @@ RSpec.describe '/sessions' do
       end
 
       # NOTE: BUG NOTICE!
-      # The create method does not return the websockify port! This should be fixed TBA
-      # Until then, this spec has been updated to reflect the bug
-      # Revisit as required
+      # The create method does not return the websockify port or the state
       it 'returns the subject as JSON' do
-        expect(parse_last_response_body).to eq(subject.as_json.merge('port' => nil))
+        expect(parse_last_response_body).to eq(
+          subject.as_json.merge('port' => nil, 'state' => nil)
+        )
       end
     end
 
@@ -616,14 +781,15 @@ RSpec.describe '/sessions' do
 
     context 'when an unverified desktop cache status is incorrect and verification fails' do
       subject do
-        Session.new(
+        build_session(
           id: '9633d854-1790-43b2-bf06-f6dc46bb4859',
           desktop: desktop,
           ip: '10.1.0.3',
           hostname: 'example.com',
           port: 5906,
           webport: 41311,
-          password: 'ca77d490'
+          password: 'ca77d490',
+          state: 'Active'
         )
       end
 
@@ -647,14 +813,15 @@ RSpec.describe '/sessions' do
 
     context 'when verifing a desktop command succeeds and the retry also succeeds' do
       subject do
-        Session.new(
+        build_session(
           id: '9633d854-1790-43b2-bf06-f6dc46bb4859',
           desktop: desktop,
           ip: '10.1.0.3',
           hostname: 'example.com',
           port: 5906,
           webport: 41311,
-          password: 'ca77d490'
+          password: 'ca77d490',
+          state: 'Active'
         )
       end
 
@@ -675,11 +842,11 @@ RSpec.describe '/sessions' do
       end
 
       # NOTE: BUG NOTICE!
-      # The create method does not return the websockify port! This should be fixed TBA
-      # Until then, this spec has been updated to reflect the bug
-      # Revisit as required
+      # The create method does not return the websockify port or the state
       it 'returns the subject as JSON' do
-        expect(parse_last_response_body).to eq(subject.as_json.merge('port' => nil))
+        expect(parse_last_response_body).to eq(
+          subject.as_json.merge('port' => nil, 'state' => nil)
+        )
       end
 
       it 'sets the desktop as verified' do
@@ -690,14 +857,15 @@ RSpec.describe '/sessions' do
 
   describe 'DELETE /session/:id' do
     subject do
-      Session.new(
+      build_session(
         id: 'ed36dedb-5003-4765-b8dc-0c1cc2922dd7',
         desktop: 'gnome',
         ip: '10.1.0.4',
         hostname: 'example.com',
         port: 5906,
         webport: 41312,
-        password: 'a33ff119'
+        password: 'a33ff119',
+        state: 'Active'
       )
     end
 
@@ -730,12 +898,32 @@ RSpec.describe '/sessions' do
       end
     end
 
-    context 'when the kill fails' do
+    context 'when the kill fails and the clean succeeds' do
       before do
         # NOTE: "Temporarily" out of use
         # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         allow(SystemCommand).to receive(:kill_session).and_return(exit_213_stub)
+        allow(SystemCommand).to receive(:clean_session).and_return(exit_0_stub)
+        make_request
+      end
+
+      it 'returns 204' do
+        expect(last_response).to be_no_content
+      end
+
+      it 'returns an empty body' do
+        expect(last_response.body).to be_empty
+      end
+    end
+
+    context 'when the kill and clean fails' do
+      before do
+        # NOTE: "Temporarily" out of use
+        # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
+        allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
+        allow(SystemCommand).to receive(:kill_session).and_return(exit_213_stub)
+        allow(SystemCommand).to receive(:clean_session).and_return(exit_213_stub)
         make_request
       end
 

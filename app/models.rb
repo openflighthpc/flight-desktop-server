@@ -33,11 +33,12 @@ class Session < Hashie::Trash
   include Hashie::Extensions::Dash::Coercion
 
   def self.index(user:)
+    cache_dir = SystemCommand::Handlers.load_cache_dir(user: user)
     cmd = SystemCommand.index_sessions(user: user)
     if cmd.success?
       cmd.stdout.split("\n").map do |line|
-        parts = line.squish.split(' ')
-        new(
+        parts = line.split("\t").map { |p| p.empty? ? nil : p }
+        loader(
           id: parts[0],
           desktop: parts[1],
           hostname: parts[2],
@@ -45,7 +46,9 @@ class Session < Hashie::Trash
           port: parts[5],
           webport: parts[6],
           password: parts[7],
-          user: user
+          state: parts[8],
+          user: user,
+          cache_dir: cache_dir
         )
       end
     else
@@ -101,7 +104,7 @@ class Session < Hashie::Trash
       end
       memo[key] = value
     end
-    new(user: user, **data)
+    loader(user: user, **data)
   end
 
   property :id
@@ -112,6 +115,35 @@ class Session < Hashie::Trash
   property :webport, coerce: String
   property :password
   property :user
+  property :state
+  property :created_at, coerce: Time
+  property :last_accessed_at, coerce: Time
+  property :cache_dir
+  property :screenshot
+
+  def self.loader(*a)
+    new(*a).tap do |session|
+      session.cache_dir ||= SystemCommand::Handlers.load_cache_dir(user: session.user)
+      session.created_at ||= begin
+        path = File.join(session.cache_dir,
+                         'flight/desktop/sessions',
+                         session.id,
+                         'metadata.yml')
+        File::Stat.new(path).ctime
+      end
+      session.last_accessed_at ||= begin
+        path = File.join(session.cache_dir,
+                         'flight/desktop/sessions',
+                         session.id,
+                         'session.log')
+        File::Stat.new(path).ctime if File.exists? path
+      end
+    end
+  end
+
+  def load_screenshot
+    self.screenshot = Screenshot.new(self).read || false
+  end
 
   def to_json
     as_json.to_json
@@ -124,17 +156,22 @@ class Session < Hashie::Trash
       'ip' => ip,
       'hostname' => hostname,
       'port' => webport,
-      'password' => password
-    }
+      'password' => password,
+      'state' => state,
+      'created_at' => created_at.rfc3339,
+      'last_accessed_at' => last_accessed_at&.rfc3339
+    }.tap do |h|
+      h['screenshot'] = Base64.encode64 screenshot if screenshot
+      h['screenshot'] = nil if screenshot == false
+    end
   end
 
   def kill(user:)
     cmd = SystemCommand.kill_session(id, user: user)
-    if cmd.success?
-      true
-    else
-      raise InternalServerError.new(details: 'failed to delete the session')
-    end
+    return true if cmd.success?
+    cmd = SystemCommand.clean_session(id, user: user)
+    return true if cmd.success?
+    raise InternalServerError.new(details: 'failed to delete the session')
   end
 end
 
@@ -157,6 +194,7 @@ class Desktop < Hashie::Trash
   property :name
   property :verified, default: false
   property :summary, default: ''
+  property :homepage
 
   def to_json
     as_json.to_json
@@ -166,7 +204,8 @@ class Desktop < Hashie::Trash
     {
       'id' => name,
       'verified' => verified?,
-      'summary' => summary
+      'summary' => summary,
+      'homepage' => homepage
     }
   end
 
@@ -222,13 +261,13 @@ Screenshot = Struct.new(:session) do
     Base64.encode64(read)
   end
 
+  def read!
+    read || raise(NotFound.new(id: session.id, type: 'screenshot'))
+  end
+
   def read
     p = self.class.path(session.user, session.id)
-    if File.exists?(p)
-      File.read(p)
-    else
-      raise NotFound.new(id: session.id, type: 'screenshot')
-    end
+    File.exists?(p) ? File.read(p) : nil
   end
 end
 

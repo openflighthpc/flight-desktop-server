@@ -62,6 +62,15 @@ class SystemCommand < Hashie::Dash
     end
   end
 
+  module Handlers
+    def self.load_cache_dir(user:)
+      SystemCommand.echo_cache_dir(user: user)
+                   .tap(&:raise_unless_successful)
+                   .stdout
+                   .chomp
+    end
+  end
+
   # NOTE: This system command is required to determine the cache directory the screenshot
   # is stored within. This is required as it is specific to each user and most be done
   # as a system call.
@@ -97,12 +106,20 @@ class SystemCommand < Hashie::Dash
     Builder.new("flight desktop kill").call(id, user: user)
   end
 
+  def self.clean_session(id, user:)
+    Builder.new("flight desktop clean").call(id, user: user)
+  end
+
   def self.verify_desktop(desktop, user:)
     Builder.new("flight desktop verify").call(desktop, user: user)
   end
 
   def self.avail_desktops(user:)
     Builder.new("flight desktop avail").call(user: user)
+  end
+
+  def self.version(user:)
+    Builder.new('flight desktop --version').call(user: user)
   end
 
   property :stdout, default: ''
