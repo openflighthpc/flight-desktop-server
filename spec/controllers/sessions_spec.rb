@@ -28,24 +28,45 @@
 #===============================================================================
 
 require 'spec_helper'
+require 'securerandom'
 
 RSpec.describe '/sessions' do
   subject { raise NotImplementedError, 'the spec has not defined its subject' }
   let(:url_id) { raise NotImplementedError, 'the spec :url_id has not been set' }
   let(:sessions) { raise NotImplementedError, 'the spec has not defined sessions' }
 
+  AUTO_DESKTOP = (0..10).map { |i| "desktop#{i}" }
+
   def build_session(**opts)
-    raise 'missing id' unless opts[:id]
+    opts = opts.dup
+
+    last_ip = rand(0..255)
+
+    # Generate a random ish session
+    opts[:id] ||= SecureRandom.uuid
+    opts[:password] ||= SecureRandom.uuid.split('-').first
+    opts[:desktop] ||= AUTO_DESKTOP.sample
+    opts[:ip] ||= "10.10.#{rand(0..255)}.#{last_ip}"
+    opts[:port] ||= (6000 + last_ip).to_s
+    opts[:webport] ||= (45000 + last_ip).to_s
+
+    # Writes the screenshot
+    if opts.delete(:screenshot)
+      path = Screenshot.path(username, opts[:id])
+      FileUtils.mkdir_p File.dirname(path)
+      File.write path, screenshot_content
+    end
+
+    # Write the metadata file
     opts[:created_at] ||= begin
       path = File.join(cache_dir, 'flight/desktop/sessions', opts[:id], 'metadata.yml')
       FileUtils.mkdir_p(File.dirname(path))
       FileUtils.touch(path)
       File::Stat.new(path).ctime
     end
-    Session.new(**opts)
-  end
 
-  def meta_path(id)
+    # Create the session
+    Session.new(**opts)
   end
 
   let(:successful_find_stub) do
@@ -69,6 +90,17 @@ RSpec.describe '/sessions' do
     end.join("\n")
     SystemCommand.new(stdout: stdout, stderr: '', code: 0)
   end
+
+  let(:screenshot_content) do
+    <<~SCREEN
+      A `bunch`, of "random" characters! &&**?><>}{[]££""''
+      ++**--!!"!£"$^£&"£$£"$%$&**()()?<>~@:{}@~}{@{{P
+
+      ¯\_(ツ)_/¯
+    SCREEN
+  end
+
+  let(:screenshot_content_base64) { Base64.encode64(screenshot_content) }
 
   shared_examples 'sessions error when missing' do
     context 'when the command fails' do
@@ -221,6 +253,10 @@ RSpec.describe '/sessions' do
       it 'returns the sessions as JSON' do
         expect(parse_last_response_body.data).to eq(sessions.as_json)
       end
+
+      it 'does not include the screenshot key' do
+        expect(parse_last_response_body.key?('screenshot')).to be(false)
+      end
     end
 
     context 'with a broken session' do
@@ -248,6 +284,44 @@ RSpec.describe '/sessions' do
         expect(data.delete('id')).to eq(id)
         expect(data.delete('state')).to eq('Broken')
         expect(data).to be_empty
+      end
+    end
+  end
+
+  context 'GET /sessions?include=snapshot' do
+    let(:sessions) { [subject] }
+
+    def make_request
+      allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
+      standard_get_headers
+      get '/sessions?include=screenshot'
+    end
+
+    context 'without the screenshot' do
+      subject { build_session }
+      before { make_request }
+
+      it 'returns 200' do
+        expect(last_response).to be_ok
+      end
+
+      it 'returns the JSON session with a blank screenshot' do
+        expect(parse_last_response_body.data.first).to \
+          eq(sessions.first.as_json.merge("screenshot" => nil))
+      end
+    end
+
+    context 'with the screenshot' do
+      subject { build_session(screenshot: true) }
+      before { make_request }
+
+      it 'returns 200' do
+        expect(last_response).to be_ok
+      end
+
+      it 'returns the JSON session with a blank screenshot' do
+        expect(parse_last_response_body.data.first).to \
+          eq(sessions.first.as_json.merge("screenshot" => screenshot_content_base64))
       end
     end
   end
@@ -334,6 +408,47 @@ RSpec.describe '/sessions' do
     end
   end
 
+  describe 'GET /sessions/:id?include=snapshot' do
+    let(:sessions) { [subject] }
+
+    def make_request
+      allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
+      standard_get_headers
+      get "/sessions/#{subject.id}?include=screenshot"
+    end
+
+    context 'when the snapshot is missing' do
+      subject { build_session }
+      before { make_request }
+
+      it 'returns ok' do
+        expect(last_response).to be_ok
+      end
+
+      it 'returns as JSON with a blanks screenshot' do
+        expect(parse_last_response_body).to \
+          eq(subject.as_json.merge('screenshot' => nil))
+      end
+    end
+
+    context 'with an existing screenshot' do
+      subject { build_session(screenshot: true) }
+      before do
+        File.write(Screenshot.path(username, subject.id), screenshot_content)
+        make_request
+      end
+
+      it 'returns ok' do
+        expect(last_response).to be_ok
+      end
+
+      it 'returns as JSON with a blanks screenshot' do
+        expect(parse_last_response_body).to \
+          eq(subject.as_json.merge('screenshot' => screenshot_content_base64))
+      end
+    end
+  end
+
   describe 'GET /sessions/:id/screenshot.png' do
     def make_request
       standard_get_headers
@@ -415,12 +530,7 @@ RSpec.describe '/sessions' do
       let(:sessions) { [subject] }
 
       let(:screenshot) do
-        <<~SCREEN
-          A `bunch`, of "random" characters! &&**?><>}{[]££""''
-          ++**--!!"!£"$^£&"£$£"$%$&**()()?<>~@:{}@~}{@{{P
-
-          ¯\_(ツ)_/¯
-        SCREEN
+        screenshot_content
       end
 
       let(:url_id) { subject.id }
@@ -788,12 +898,32 @@ RSpec.describe '/sessions' do
       end
     end
 
-    context 'when the kill fails' do
+    context 'when the kill fails and the clean succeeds' do
       before do
         # NOTE: "Temporarily" out of use
         # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
         allow(SystemCommand).to receive(:kill_session).and_return(exit_213_stub)
+        allow(SystemCommand).to receive(:clean_session).and_return(exit_0_stub)
+        make_request
+      end
+
+      it 'returns 204' do
+        expect(last_response).to be_no_content
+      end
+
+      it 'returns an empty body' do
+        expect(last_response.body).to be_empty
+      end
+    end
+
+    context 'when the kill and clean fails' do
+      before do
+        # NOTE: "Temporarily" out of use
+        # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
+        allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
+        allow(SystemCommand).to receive(:kill_session).and_return(exit_213_stub)
+        allow(SystemCommand).to receive(:clean_session).and_return(exit_213_stub)
         make_request
       end
 

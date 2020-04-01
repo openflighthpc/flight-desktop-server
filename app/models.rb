@@ -119,6 +119,7 @@ class Session < Hashie::Trash
   property :created_at, coerce: Time
   property :last_accessed_at, coerce: Time
   property :cache_dir
+  property :screenshot
 
   def self.loader(*a)
     new(*a).tap do |session|
@@ -140,6 +141,10 @@ class Session < Hashie::Trash
     end
   end
 
+  def load_screenshot
+    self.screenshot = Screenshot.new(self).read || false
+  end
+
   def to_json
     as_json.to_json
   end
@@ -155,16 +160,18 @@ class Session < Hashie::Trash
       'state' => state,
       'created_at' => created_at.rfc3339,
       'last_accessed_at' => last_accessed_at&.rfc3339
-    }
+    }.tap do |h|
+      h['screenshot'] = Base64.encode64 screenshot if screenshot
+      h['screenshot'] = nil if screenshot == false
+    end
   end
 
   def kill(user:)
     cmd = SystemCommand.kill_session(id, user: user)
-    if cmd.success?
-      true
-    else
-      raise InternalServerError.new(details: 'failed to delete the session')
-    end
+    return true if cmd.success?
+    cmd = SystemCommand.clean_session(id, user: user)
+    return true if cmd.success?
+    raise InternalServerError.new(details: 'failed to delete the session')
   end
 end
 
@@ -187,6 +194,7 @@ class Desktop < Hashie::Trash
   property :name
   property :verified, default: false
   property :summary, default: ''
+  property :homepage
 
   def to_json
     as_json.to_json
@@ -196,7 +204,8 @@ class Desktop < Hashie::Trash
     {
       'id' => name,
       'verified' => verified?,
-      'summary' => summary
+      'summary' => summary,
+      'homepage' => homepage
     }
   end
 
@@ -252,13 +261,13 @@ Screenshot = Struct.new(:session) do
     Base64.encode64(read)
   end
 
+  def read!
+    read || raise(NotFound.new(id: session.id, type: 'screenshot'))
+  end
+
   def read
     p = self.class.path(session.user, session.id)
-    if File.exists?(p)
-      File.read(p)
-    else
-      raise NotFound.new(id: session.id, type: 'screenshot')
-    end
+    File.exists?(p) ? File.read(p) : nil
   end
 end
 

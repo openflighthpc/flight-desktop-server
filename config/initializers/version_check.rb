@@ -27,30 +27,29 @@
 # https://github.com/openflighthpc/flight-desktop-server
 #===============================================================================
 
-# NOTE: All desktops must be stubbed in the spec
+# NOTE: The specs do not require the CLI
 return if Figaro.env.RACK_ENV! == 'test'
 
-# Periodically reload and verify the desktops
-Thread.new do
-  count = 0
-  loop do
-    models = SystemCommand.avail_desktops(user: Figaro.env.USER!)
-                          .tap(&:raise_unless_successful)
-                          .stdout
-                          .each_line.map do |line|
-      data = line.split("\t")
-      home = data[2].empty? ? nil : data[2]
-      Desktop.new(name: data[0], summary: data[1], homepage: home)
-    end
+require 'rubygems'
 
-    models.each { |m| m.verify_desktop(user: Figaro.env.USER!) }
-    hash = models.map { |m| [m.name, m] }.to_h
+supported_version = File.read(File.expand_path('../../.cli-version', __dir__))
+                        .chomp
 
-    Desktop.instance_variable_set(:@cache, hash)
-    DEFAULT_LOGGER.info "Finished #{'re' if count > 0 }loading the desktops"
-    count += 1
+raw_version = SystemCommand.version(user: Figaro.env.USER!)
+                           .tap(&:raise_unless_successful)
+                           .stdout
+cli_version = /\d+\.\d+\.\d+/.match(raw_version)[0]
 
-    sleep Figaro.env.refresh_rate!.to_i
-  end
-end
+low = Gem::Version.new(supported_version)
+high = Gem::Version.new(cli_version)
+
+too_low = (high < low)
+wrong_major = (low.segments.first != high.segments.first)
+
+raise <<~ERROR if too_low || wrong_major
+
+  The server can not be started due to an incompatible version of 'flight desktop'
+  Requires: #{supported_version}
+  Current:  #{cli_version}
+ERROR
 

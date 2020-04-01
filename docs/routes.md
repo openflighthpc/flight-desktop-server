@@ -73,7 +73,7 @@ The `id` for a `sessions` MUST conform to the `UUID` format according to [RFC412
 
 ### GET Index
 
-Return a list of all currently running desktop sessions for the identified user. The `data` attribute MAY be empty.
+Return a list of all currently running desktop sessions for the identified user. The `data` attribute MAY be empty. The `include=screenshot` query parameter SHOULD trigger the base64 encoded screenshot to be returned for each session resource.
 
 ```
 GET /sessions
@@ -89,9 +89,27 @@ HTTP/2 200 OK
 }
 ```
 
+#### Other Responses
+
+To retrieve the screenshot for each session:
+
+```
+GET /sessions?include=screenshot
+Authorization: Basic <base64 encoded username:password>
+Accepts: application/json
+
+HTTP/2 200 OK
+{
+  "data": [
+    <session-resource-object-with-screenshot>,
+    ...
+  ]
+}
+```
+
 ### GET Show
 
-Returns an instance of a running session.
+Returns an instance of a running session. The `include=screenshot` query parameter SHOULD trigger the base64 encoded screenshot to be returned with the request.
 
 ```
 GET /sessions/:id
@@ -109,6 +127,18 @@ HTTP/2 200 OK
   "state": "<Active|BROKEN|...>",
   "created_at": "<time-rfc339>",
   "last_accessed_at": "<None|time-rfc3339>"
+}
+
+# When the screenshot is included
+
+GET /sessions/:id?include=screenshot
+Authorization: Basic <base64 encoded username:password>
+Accepts: application/json
+
+HTTP/2 200 OK
+{
+  ... as above ...,
+  "screenshot": "<Base64 encoded sceenshot>"
 }
 ```
 
@@ -154,13 +184,19 @@ Type: String
 
 The time the session was created
 
-Type: [RFC3339 Timestamp](https://tools.ietf.org/html/rfc3339)
+Type: [String - RFC3339 Timestamp](https://tools.ietf.org/html/rfc3339)
 
 *last_accessed_at*
 
 The time the session was last accessed. This field MAY be None if the session has not yet be accessed.
 
-Type: None | [RFC3339 Timestamp](https://tools.ietf.org/html/rfc3339)
+Type: None | [String - RFC3339 Timestamp](https://tools.ietf.org/html/rfc3339)
+
+*screenshot*
+
+Returns the base64 encoded screenshot. The `included=snapshot` query parameter is REQUIRED for this attribute to be returned. It MUST return None when the snapshot does not exist.
+
+Type: None | String - image/png;base64
 
 #### Other Responses
 
@@ -298,7 +334,8 @@ HTTP/2 200 OK
 {
   "id": "<UUID>",
   "verified": <true|false>,
-  "summary": "<summary>"
+  "summary": "<summary>",
+  "homepage": "<home-url>"
 }
 ```
 
@@ -321,6 +358,12 @@ Type: Boolean
 A short description on the desktop
 
 Type: String
+
+*homepage:*
+
+The URL to the desktops homepage when available, otherwise None
+
+Type: None | String - URL
 
 #### Other Responses
 

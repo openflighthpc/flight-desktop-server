@@ -106,12 +106,20 @@ class SystemCommand < Hashie::Dash
     Builder.new("flight desktop kill").call(id, user: user)
   end
 
+  def self.clean_session(id, user:)
+    Builder.new("flight desktop clean").call(id, user: user)
+  end
+
   def self.verify_desktop(desktop, user:)
     Builder.new("flight desktop verify").call(desktop, user: user)
   end
 
   def self.avail_desktops(user:)
     Builder.new("flight desktop avail").call(user: user)
+  end
+
+  def self.version(user:)
+    Builder.new('flight desktop --version').call(user: user)
   end
 
   property :stdout, default: ''
