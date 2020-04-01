@@ -118,6 +118,10 @@ class SystemCommand < Hashie::Dash
     Builder.new("flight desktop avail").call(user: user)
   end
 
+  def self.version(user:)
+    Builder.new('flight desktop --version').call(user: user)
+  end
+
   property :stdout, default: ''
   property :stderr, default: ''
   property :code,   default: 255
