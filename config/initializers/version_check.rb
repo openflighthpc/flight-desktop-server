@@ -43,8 +43,10 @@ cli_version = /\d+\.\d+\.\d+/.match(raw_version)[0]
 low = Gem::Version.new(supported_version)
 high = Gem::Version.new(cli_version)
 
-return if low <= high
-raise <<~ERROR if high < low
+too_low = (high < low)
+wrong_major = (low.segments.first != high.segments.first)
+
+raise <<~ERROR if too_low || wrong_major
 
   The server can not be started due to an incompatible version of 'flight desktop'
   Requires: #{supported_version}
