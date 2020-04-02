@@ -92,7 +92,7 @@ end
 # Adapted from:
 # https://raw.githubusercontent.com/rack/rack-contrib/master/lib/rack/contrib/post_body_content_type_parser.rb
 before do
-  next if ['GET', 'HEAD', 'OPTIONS', 'DELETE'].include? env['REQUEST_METHOD']
+  next if ['GET', 'HEAD', 'OPTIONS'].include? env['REQUEST_METHOD']
   if env['CONTENT_TYPE'] == 'application/json'
     begin
       io = env['rack.input']
@@ -199,7 +199,14 @@ namespace '/sessions' do
 
     delete do
       status 204
-      current_session.kill(user: current_user)
+      case params.fetch('strategy', 'kill')
+      when 'kill'
+        current_session.kill(user: current_user)
+      when 'clean'
+        current_session.clean(user: current_user)
+      else
+        raise BadRequest.new(detail: "unsupported strategy: #{params['strategy']}")
+      end
     end
   end
 end
