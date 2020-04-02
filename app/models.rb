@@ -173,6 +173,14 @@ class Session < Hashie::Trash
     return true if cmd.success?
     raise InternalServerError.new(details: 'failed to delete the session')
   end
+
+  def clean(user:)
+    if SystemCommand.clean_session(id, user: user).success?
+      true
+    else
+      raise InternalServerError.new(details: 'failed to clean the session')
+    end
+  end
 end
 
 class Desktop < Hashie::Trash
