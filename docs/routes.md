@@ -15,7 +15,7 @@ All requests SHOULD set the following headers:
 Authorization: Basic <base64 encoded username:password>
 Accepts: application/json
 
-# NON GET/DELETE Routes
+# NON GET Routes
 Content-Type: application/json
 ```
 
@@ -273,15 +273,44 @@ Content-Type: application/json
 
 ### DELETE Terminate
 
-Terminate an active session. It SHALL respond `204 No Content` iff the session was successfully terminated.
+Will attempt to kill an actively running session and permanently remove its configurations. The `strategy` attribute is OPTIONAL and will default to `kill`. The `clean` strategy will only attempt to remove broken sessions.
 
 ```
 DELETE /sessions/:id`
 Authorization: Basic <base64 encoded username:password>
 Accepts: application/json
+{
+  "strategy": "<kill|clean>"
+}
 
 HTTP/2 204 No Content
 ```
+
+### Other Responses
+
+The request SHALL return `204 No Content` after it has successfully cleaned a broken session. Actively running session can not be cleaned and SHALL respond with `400 Bad Request`.
+```
+DELETE /sessions/:id`
+Authorization: Basic <base64 encoded username:password>
+Accepts: application/json
+{
+  "strategy": "clean"
+}
+
+HTTP/2 204 No Content
+
+HTTP/2 400 Bad Request
+{
+  "errors": [
+    {
+      "status": "400",
+      "code": "Bad Request",
+      "detail": "unsupported strategy: <strategy>"
+    }
+  ]
+}
+```
+
 
 ### GET Screenshot
 
