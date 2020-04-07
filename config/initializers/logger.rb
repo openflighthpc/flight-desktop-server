@@ -24,7 +24,7 @@
 #  https://opensource.org/licenses/EPL-2.0
 #
 # For more information on FlightDesktopServer, please visit:
-# https://github.com/openflighthpc/flight-desktop-server
+# https://github.com/openflighthpc/flight-desktop-restapi
 #===============================================================================
 
 DEFAULT_LOGGER = Logger.new($stdout).tap do |logger|

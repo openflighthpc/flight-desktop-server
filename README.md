@@ -15,8 +15,8 @@ The following are required to run this application:
 Start by cloning the repo, adding the binaries to your path, and install the gems. This guide assumes the `bin` directory is on your `PATH`. If you prefer not to modify your `PATH`, then some of the commands need to be prefixed with `/path/to/app/bin`.
 
 ```
-git clone https://github.com/openflighthpc/flight-desktop-server
-cd flight-desktop-server
+git clone https://github.com/openflighthpc/flight-desktop-restapi
+cd flight-desktop-restapi
 
 # Add the binaries to your path, which will be used by the remainder of this guide
 export PATH=$PATH:$(pwd)/bin

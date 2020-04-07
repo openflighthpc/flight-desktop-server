@@ -32,7 +32,7 @@ You can help FlightDesktopServer by helping others who use it and need support.
 ## Analyse Issues
 
 Analysing issue reports can be a lot of effort. Any help is welcome!
-Go to [the GitHub issue tracker](https://github.com/openflighthpc/flight-desktop-server/issues?state=open)
+Go to [the GitHub issue tracker](https://github.com/openflighthpc/flight-desktop-restapi/issues?state=open)
 and find an open issue which needs additional work or a bugfix
 (e.g. issues labeled with "help wanted" or "bug").
 
@@ -48,7 +48,7 @@ only handle well-reported, actual bugs, so please follow the
 guidelines below.
 
 Once you have familiarised with the guidelines, you can go to the
-[GitHub issue tracker for FlightDesktopServer](https://github.com/openflighthpc/flight-desktop-server/issues/new)
+[GitHub issue tracker for FlightDesktopServer](https://github.com/openflighthpc/flight-desktop-restapi/issues/new)
 to report the issue.
 
 ### Quick Checklist for Bug Reports
@@ -118,7 +118,7 @@ applied to FlightDesktopServer itself.
 
 In particular you need to agree to the Contributor License Agreement,
 which can be [found
-here](https://www.clahub.com/agreements/openflighthpc/flight-desktop-server). This
+here](https://www.clahub.com/agreements/openflighthpc/flight-desktop-restapi). This
 applies to all contributors, including those contributing on behalf of
 a company. If you agree to its content, you simply have to click on
 the link posted by the CLA assistant available on the pull
