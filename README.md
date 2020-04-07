@@ -1,4 +1,4 @@
-# Flight Desktop Server
+# Flight Desktop RestAPI
 
 ## Installation
 
@@ -15,8 +15,8 @@ The following are required to run this application:
 Start by cloning the repo, adding the binaries to your path, and install the gems. This guide assumes the `bin` directory is on your `PATH`. If you prefer not to modify your `PATH`, then some of the commands need to be prefixed with `/path/to/app/bin`.
 
 ```
-git clone https://github.com/openflighthpc/flight-desktop-server
-cd flight-desktop-server
+git clone https://github.com/openflighthpc/flight-desktop-restapi
+cd flight-desktop-restapi
 
 # Add the binaries to your path, which will be used by the remainder of this guide
 export PATH=$PATH:$(pwd)/bin
@@ -67,4 +67,4 @@ Copyright (C) 2020-present Alces Flight Ltd.
 
 This program and the accompanying materials are made available under the terms of the Eclipse Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or alternative license terms made available by Alces Flight Ltd - please direct inquiries about licensing to licensing@alces-flight.com.
 
-FlightDesktopServer is distributed in the hope that it will be useful, but WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. See the Eclipse Public License 2.0 for more details.
+FlightDesktopRestAPI is distributed in the hope that it will be useful, but WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. See the Eclipse Public License 2.0 for more details.
