@@ -1,40 +1,113 @@
 # Flight Desktop RestAPI
 
+A REST API to manage interactive GUI desktop sessions via the `flight-desktop`
+tool.
+
+## Overview
+
+Flight Desktop RestAPI is a REST API that in conjunction with [Flight
+Desktop Webapp](https://github.com/openflighthpc/flight-desktop-webapp) and
+[Flight Desktop](https://github.com/openflighthpc/flight-desktop) provides
+browser access to interactive GUI desktop sessions within HPC environments.
+
 ## Installation
 
-### Preconditions
+### From source
 
-The following are required to run this application:
+Flight Desktop RestAPI requires a recent version of Ruby and `bundler`.
 
-* OS:           Centos7
-* Ruby:         2.5+
-* Yum Packages: gcc, make, ruby-devel, pam-devel
-
-### Manual installation
-
-Start by cloning the repo, adding the binaries to your path, and install the gems. This guide assumes the `bin` directory is on your `PATH`. If you prefer not to modify your `PATH`, then some of the commands need to be prefixed with `/path/to/app/bin`.
+The following will install from source using `git`:
 
 ```
-git clone https://github.com/openflighthpc/flight-desktop-restapi
+git clone https://github.com/alces-flight/flight-desktop-restapi.git
 cd flight-desktop-restapi
-
-# Add the binaries to your path, which will be used by the remainder of this guide
-export PATH=$PATH:$(pwd)/bin
-bundle install --without development test --path vendor
-
-# The following command can be ran without modifying the PATH variable by
-# prefixing `bin/` to the commands
 bin/bundle install --without development test pry --path vendor
 ```
 
-### WIP Configuration
+### Installing with Flight Runway
 
-This application can be configured by setting the configuration values into the environment. Refer to the configuration [reference](config/application.yaml.reference) and [defaults](config/application.yaml) for an exhaustive list.
+Flight Runway provides a Ruby environment and command-line helpers for running
+openflightHPC tools.  Flight Desktop RestAPI integrates with Flight Runway to
+provide an easy way for multiple users of an HPC environment to use the tool.
+
+To install Flight Runway, see the [Flight Runway installation
+docs](https://github.com/openflighthpc/flight-runway#installation).
+
+These instructions assume that `flight-runway` has been installed from
+the openflightHPC yum repository and that either [system-wide
+integration](https://github.com/openflighthpc/flight-runway#system-wide-integration) has been enabled or the
+[`flight-starter`](https://github.com/openflighthpc/flight-starter) tool has been
+installed and the environment activated with the `flight start` command.
+
+ * Enable the Alces Flight RPM repository:
+
+    ```
+    yum install https://alces-flight.s3-eu-west-1.amazonaws.com/repos/alces-flight/x86_64/alces-flight-release-1-1.noarch.rpm
+    ```
+
+ * Rebuild your `yum` cache:
+
+    ```
+    yum makecache
+    ```
+    
+ * Install the `flight-desktop-restapi` RPM:
+
+    ```
+    [root@myhost ~]# yum install flight-desktop-restapi
+    ```
+
+ * Install a websockify server such as `python-websockify`:
+
+    ```
+    [root@myhost ~]# yum install python-websockify
+    ```
+
+ * Optionally, install screenshotting programs.  If these are not installed
+   the session previews will not work.
+
+    ```
+    [root@myhost ~]# yum install netpbm-progs xorg-x11-apps
+    ```
+
+ * Enable HTTPs support
+
+    Flight Desktop RestAPI is designed to operate over HTTPs connections.  You
+    can enable HTTPs with self-signed certificates by running the commands
+    below.  You will be asked to enter a passphrase and to answer some
+    questions about your organization.
+
+    ```
+    [root@myhost ~]# flight www enable-https
+    ```
 
 
-## Starting the Server
+## Configuration
 
-The `puma` server daemon can be started manually with:
+Making changes to the default configuration is optional and can be achieved by editing the `application.yaml` file in the `config/` subdirectory of the tool. A 
+[reference](config/application.yaml.reference) file is distributed which
+outlines all the configuration values available.
+
+## Operation
+
+### When installed with Flight Runway
+
+The server can be started by running the following command:
+
+```
+[root@myhost ~]# flight service start desktop-restapi
+```
+
+The server can be stopped by running the following command:
+
+```
+[root@myhost ~]# flight service stop desktop-restapi
+```
+
+### When installed from source
+
+The server can be started by running the following from the root directory of
+the source checkout.
 
 ```
 bin/puma -p <port> -e production -d \
@@ -44,9 +117,10 @@ bin/puma -p <port> -e production -d \
           --pidfile         <pid-file-path>
 ```
 
-## Stopping the Server
+You will need to determine appropriate paths for the log files and pid file.
 
-The `pumactl` command can be used to preform various start/stop/restart actions on the puma server. Assuming that `systemd` hasn't been setup, the following will stop the server:
+The server can be stopped by running the following from the root of the source
+checkout.
 
 ```
 bin/pumactl stop
