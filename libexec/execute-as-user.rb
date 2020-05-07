@@ -26,6 +26,7 @@
 # For more information on FlightDesktopRestAPI, please visit:
 # https://github.com/openflighthpc/flight-desktop-restapi
 #===============================================================================
+require 'etc'
 
 begin
   # Extracts the user and command from the ruby ARGV
