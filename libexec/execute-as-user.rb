@@ -28,6 +28,8 @@
 #===============================================================================
 require 'etc'
 
+require 'etc'
+
 begin
   # Extracts the user and command from the ruby ARGV
   user = ARGV.first
@@ -48,7 +50,7 @@ begin
   }
 
   # Executes the command
-  exec(env, *argv, unsetenv_others: true)
+  exec(env, *argv, unsetenv_others: true, close_others: true)
 rescue => e
   # Print any ruby errors to STDERR
   $stderr.puts e.message
