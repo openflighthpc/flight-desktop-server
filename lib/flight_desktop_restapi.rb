@@ -1,7 +1,5 @@
-# frozen_string_literal: true
-
 #==============================================================================
-# Copyright (C) 2020-present Alces Flight Ltd.
+# Copyright (C) 2021-present Alces Flight Ltd.
 #
 # This file is part of FlightDesktopRestAPI.
 #
@@ -27,26 +25,17 @@
 # https://github.com/openflighthpc/flight-desktop-restapi
 #===============================================================================
 
-DEFAULT_LOGGER = Logger.new($stdout).tap do |logger|
-  logger.level = case FlightDesktopRestAPI.config.log_level.to_s
-  when 'fatal'
-    Logger::FATAL
-  when 'error'
-    Logger::ERROR
-  when 'warn'
-    Logger::WARN
-  when 'info'
-    Logger::INFO
-  when 'debug'
-    Logger::DEBUG
-  else
-    raise 'Unrecognised log level'
+module FlightDesktopRestAPI
+  autoload(:Configuration, 'flight_desktop_restapi/configuration')
+
+  class << self
+    def app
+      # XXX: Eventually extract this to a Application object when the need arises
+      @app ||= Struct.new(:config).new(Configuration.load)
+    end
+
+    def config
+      app.config
+    end
   end
 end
-
-configure do
-  set :show_exceptions, :after_handler
-  set :logger, DEFAULT_LOGGER
-  enable :logging
-end
-

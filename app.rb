@@ -36,7 +36,7 @@ configure do
   set :raise_errors, true
   set :show_exceptions, false
 
-  enable :cross_origin if Figaro.env.cors_domain
+  enable :cross_origin if FlightDesktopRestAPI.config.cors_domain
 end
 
 not_found do
@@ -62,12 +62,12 @@ end
 before do
   content_type 'application/json'
 
-  response.headers['Access-Control-Allow-Origin'] = Figaro.env.cors_domain if Figaro.env.cors_domain
+  response.headers['Access-Control-Allow-Origin'] = FlightDesktopRestAPI.config.cors_domain if FlightDesktopRestAPI.config.cors_domain
 end
 
 class PamAuth
   def self.valid?(username, password)
-    Rpam.auth(username, password, service: Figaro.env.pam_conf!)
+    Rpam.auth(username, password, service: FlightDesktopRestAPI.config.pam_conf)
   end
 end
 
@@ -109,7 +109,7 @@ before do
   end
 end
 
-if Figaro.env.cors_domain
+if FlightDesktopRestAPI.config.cors_domain
   options "*" do
     response.headers["Allow"] = "GET, PUT, POST, DELETE, OPTIONS"
     response.headers["Access-Control-Allow-Methods"] = "GET, PUT, POST, DELETE, OPTIONS"

@@ -1,7 +1,5 @@
-# frozen_string_literal: true
-
 #==============================================================================
-# Copyright (C) 2020-present Alces Flight Ltd.
+# Copyright (C) 2021-present Alces Flight Ltd.
 #
 # This file is part of FlightDesktopRestAPI.
 #
@@ -27,20 +25,17 @@
 # https://github.com/openflighthpc/flight-desktop-restapi
 #===============================================================================
 
-# Loads the configurations into the environment
-Figaro.application = Figaro::Application.new(
-  environment: (ENV['RACK_ENV'] || 'development').to_sym,
-  path: File.expand_path('../application.yaml', __dir__)
-)
-Figaro.load
-      .reject { |_, v| v.nil? }
-      .each { |key, value| ENV[key] ||= value.to_s }
+module FlightDesktopRestAPI
+  class Configuration
+    extend FlightConfiguration::RackDSL
 
-# Hard sets the app's root directory to the current code base
-ENV['app_root_dir'] = File.expand_path('../..', __dir__)
+    root_path File.expand_path('../..', __dir__)
+    application_name 'flight-desktop-restapi'
 
-# NOTE: desktop_types has it's own initializer and is not setup here
-
-# Enforce the generally required keys
-Figaro.require_keys('log_level', 'pam_conf', 'refresh_rate')
+    attribute 'pam_conf',     default: 'sshd'
+    attribute 'cors_domain',  required: false
+    attribute 'refresh_rate', default: 3600
+    attribute 'log_level',    default: 'info'
+  end
+end
 

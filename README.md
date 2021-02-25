@@ -84,9 +84,7 @@ installed and the environment activated with the `flight start` command.
 
 ## Configuration
 
-Making changes to the default configuration is optional and can be achieved by editing the `application.yaml` file in the `config/` subdirectory of the tool. A 
-[reference](config/application.yaml.reference) file is distributed which
-outlines all the configuration values available.
+Making changes to the default configuration is optional and can be achieved by editing the [flight-desktop-restapi.yaml](etc/flight-desktop-restapi.yaml) file.
 
 ## Operation
 

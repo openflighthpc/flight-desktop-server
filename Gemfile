@@ -33,7 +33,7 @@ git_source(:github) { |repo_name| "https://github.com/#{repo_name}" }
 
 gem 'activesupport', require: 'active_support/all'
 gem 'faraday'
-gem 'figaro'
+gem 'flight_configuration', github: 'openflighthpc/flight_configuration', branch: '24928260e542768f13cc513a3a08af69f690dfbc'
 gem 'hashie'
 gem 'puma'
 gem 'rake'

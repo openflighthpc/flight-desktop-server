@@ -28,14 +28,14 @@
 #===============================================================================
 
 # NOTE: The specs do not require the CLI
-return if Figaro.env.RACK_ENV! == 'test'
+return if ENV['RACK_ENV'] == 'test'
 
 require 'rubygems'
 
 supported_version = File.read(File.expand_path('../../.cli-version', __dir__))
                         .chomp
 
-raw_version = SystemCommand.version(user: Figaro.env.USER!)
+raw_version = SystemCommand.version(user: ENV['USER'])
                            .tap(&:raise_unless_successful)
                            .stdout
 cli_version = /\d+\.\d+\.\d+/.match(raw_version)[0]

@@ -28,13 +28,13 @@
 #===============================================================================
 
 # NOTE: All desktops must be stubbed in the spec
-return if Figaro.env.RACK_ENV! == 'test'
+return if ENV['RACK_ENV'] == 'test'
 
 # Periodically reload and verify the desktops
 Thread.new do
   count = 0
   loop do
-    models = SystemCommand.avail_desktops(user: Figaro.env.USER!)
+    models = SystemCommand.avail_desktops(user: ENV['USER'])
                           .tap(&:raise_unless_successful)
                           .stdout
                           .each_line.map do |line|
@@ -43,14 +43,14 @@ Thread.new do
       Desktop.new(name: data[0], summary: data[1], homepage: home)
     end
 
-    models.each { |m| m.verify_desktop(user: Figaro.env.USER!) }
+    models.each { |m| m.verify_desktop(user: ENV['USER']) }
     hash = models.map { |m| [m.name, m] }.to_h
 
     Desktop.instance_variable_set(:@cache, hash)
     DEFAULT_LOGGER.info "Finished #{'re' if count > 0 }loading the desktops"
     count += 1
 
-    sleep Figaro.env.refresh_rate!.to_i
+    sleep FlightDesktopRestAPI.config.refresh_rate
   end
 end
 

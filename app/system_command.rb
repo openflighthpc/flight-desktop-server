@@ -36,7 +36,7 @@ class SystemCommand < Hashie::Dash
     attr_reader :base_argv
 
     def self.bootstrap_path
-      @bootstrap_path ||= File.join(Figaro.env.app_root_dir!, 'libexec/execute-as-user.rb')
+      @bootstrap_path ||= File.join(FlightDesktopRestAPI.config.class.root_path, 'libexec/execute-as-user.rb')
     end
 
     def initialize(cmd)

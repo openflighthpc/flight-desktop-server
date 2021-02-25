@@ -48,7 +48,7 @@ end
 task require: :require_bundler do
   require 'json'
   require 'sinatra'
-  require 'config/initializers/figaro'
+  require 'flight_desktop_restapi'
   require 'config/initializers/logger'
   require 'app/system_command'
   require 'app/errors'
