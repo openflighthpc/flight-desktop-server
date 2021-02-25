@@ -32,13 +32,11 @@ source "https://rubygems.org"
 git_source(:github) { |repo_name| "https://github.com/#{repo_name}" }
 
 gem 'activesupport', require: 'active_support/all'
-gem 'faraday'
 gem 'flight_configuration', github: 'openflighthpc/flight_configuration', branch: '24928260e542768f13cc513a3a08af69f690dfbc'
 gem 'hashie'
 gem 'puma'
-gem 'rake'
 gem 'rpam-ruby19', require: 'rpam'
-gem 'sinatra'
+gem 'sinatra', require: 'sinatra/base'
 gem 'sinatra-namespace'
 gem 'sinatra-cross_origin'
 

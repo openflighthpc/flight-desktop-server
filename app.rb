@@ -28,7 +28,6 @@
 #===============================================================================
 
 require 'sinatra'
-require 'sinatra/namespace'
 
 configure do
   set :bind, '0.0.0.0'

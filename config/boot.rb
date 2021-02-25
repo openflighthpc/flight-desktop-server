@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-
 #==============================================================================
 # Copyright (C) 2020-present Alces Flight Ltd.
 #
@@ -27,20 +26,30 @@
 # https://github.com/openflighthpc/flight-desktop-restapi
 #===============================================================================
 
-DEFAULT_LOGGER = Logger.new($stdout).tap do |logger|
-  logger.level = case FlightDesktopRestAPI.config.log_level.to_s
-  when 'fatal'
-    Logger::FATAL
-  when 'error'
-    Logger::ERROR
-  when 'warn'
-    Logger::WARN
-  when 'info'
-    Logger::INFO
-  when 'debug'
-    Logger::DEBUG
-  else
-    raise 'Unrecognised log level'
-  end
+ENV['RACK_ENV'] ||= 'development'
+ENV['BUNDLE_GEMFILE'] ||= File.expand_path('../Gemfile', __dir__)
+
+require 'rubygems'
+require 'bundler'
+require 'json'
+
+if ENV['RACK_ENV'] == 'development'
+  Bundler.require(:default, :development)
+elsif ENV['RACK_ENV'] == 'test'
+  Bundler.require(:default, :test)
+else
+  Bundler.require(:default)
 end
+
+lib = File.expand_path('../lib', __dir__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+
+require 'flight_desktop_restapi'
+require_relative 'initializers/logger'
+require_relative '../app/system_command'
+require_relative '../app/errors'
+require_relative '../app/models'
+require_relative 'initializers/version_check'
+require_relative 'initializers/desktop_types'
+require_relative '../app'
 

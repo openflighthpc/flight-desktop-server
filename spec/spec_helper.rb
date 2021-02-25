@@ -28,10 +28,7 @@
 #===============================================================================
 
 ENV['RACK_ENV'] = 'test'
-
-require 'rake'
-load File.expand_path('../Rakefile', __dir__)
-Rake::Task[:require].invoke
+require_relative '../config/boot.rb'
 
 module RSpecSinatraMixin
   include Rack::Test::Methods

@@ -27,9 +27,15 @@
 # https://github.com/openflighthpc/flight-desktop-restapi
 #===============================================================================
 
-require 'rake'
-load File.expand_path(File.join(__dir__, 'Rakefile'))
-Rake::Task[:require].invoke
+require_relative 'config/boot.rb'
+
+require 'sinatra'
+
+configure do
+  set :show_exceptions, :after_handler
+  set :logger, DEFAULT_LOGGER
+  enable :logging
+end
 
 run Sinatra::Application
 
