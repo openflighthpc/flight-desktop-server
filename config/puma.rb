@@ -27,6 +27,5 @@
 # https://github.com/openflighthpc/flight-desktop-restapi
 #===============================================================================
 
-port 6305
-pidfile File.expand_path(File.join(__dir__, '..', 'var', 'puma.pid'))
-tag 'flight-desktop-restapi'
+bind FlightDesktopRestAPI.config.bind_address
+tag FlightDesktopRestAPI.config.class.application_name
