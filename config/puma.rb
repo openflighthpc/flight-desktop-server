@@ -29,3 +29,4 @@
 
 port 6305
 pidfile File.expand_path(File.join(__dir__, '..', 'var', 'puma.pid'))
+tag 'flight-desktop-restapi'

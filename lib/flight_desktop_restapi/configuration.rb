@@ -38,6 +38,7 @@ module FlightDesktopRestAPI
     attribute 'shared_secret_path', default: 'etc/shared-secret.conf',
                                     transform: relative_to(root_path)
     attribute 'sso_cookie_name',    default: 'flight_login'
+    attribute 'desktop_command',    default: 'flight desktop'
 
     def auth_decoder
       @auth_decoder ||= FlightAuth::Builder.new(shared_secret_path)
