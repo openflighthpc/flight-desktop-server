@@ -37,5 +37,8 @@ configure do
   enable :logging
 end
 
-run Sinatra::Application
+app = Rack::Builder.new do
+  map('/v2') { run Sinatra::Application }
+end
 
+run app
