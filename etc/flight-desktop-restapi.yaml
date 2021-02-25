@@ -32,7 +32,7 @@
 #
 # The environment variable flight_DESKTOP_RESTAPI_pam_conf takes precedence.
 # =============================================================================
-pam_conf:
+# pam_conf:
 
 # =============================================================================
 # CORS Domain [OPTIONAL]
@@ -41,7 +41,7 @@ pam_conf:
 #
 # The environment variable flight_DESKTOP_RESTAPI_cors_domain takes precedence.
 # =============================================================================
-cors_domain:
+# cors_domain:
 
 # =============================================================================
 # Refresh Rate
@@ -50,7 +50,7 @@ cors_domain:
 #
 # The environment variable flight_DESKTOP_RESTAPI_refresh_rate takes precedence.
 # =============================================================================
-refresh_rate:
+# refresh_rate:
 
 # =============================================================================
 # Log Level [DEFAULT]
@@ -59,4 +59,4 @@ refresh_rate:
 #
 # The environment variable flight_DESKTOP_RESTAPI_log_level takes precedence.
 # =============================================================================
-log_level:
+# log_level:
