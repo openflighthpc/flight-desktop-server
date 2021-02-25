@@ -32,10 +32,16 @@ module FlightDesktopRestAPI
     root_path File.expand_path('../..', __dir__)
     application_name 'flight-desktop-restapi'
 
-    attribute 'pam_conf',     default: 'sshd'
-    attribute 'cors_domain',  required: false
-    attribute 'refresh_rate', default: 3600
-    attribute 'log_level',    default: 'info'
+    attribute 'cors_domain',        required: false
+    attribute 'refresh_rate',       default: 3600
+    attribute 'log_level',          default: 'info'
+    attribute 'shared_secret_path', default: 'etc/shared-secret.conf',
+                                    transform: relative_to(root_path)
+    attribute 'sso_cookie_name',    default: 'flight_login'
+
+    def auth_decoder
+      @auth_decoder ||= FlightAuth::Builder.new(shared_secret_path)
+    end
   end
 end
 

@@ -46,6 +46,10 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 require 'flight_desktop_restapi'
 require_relative 'initializers/logger'
+
+# Ensures the shared secret exists
+FlightDesktopRestAPI.config.auth_decoder
+
 require_relative '../app/system_command'
 require_relative '../app/errors'
 require_relative '../app/models'
