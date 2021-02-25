@@ -27,5 +27,7 @@
 # https://github.com/openflighthpc/flight-desktop-restapi
 #===============================================================================
 
+require_relative 'boot.rb'
+
 bind FlightDesktopRestAPI.config.bind_address
 tag FlightDesktopRestAPI.config.class.application_name
