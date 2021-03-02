@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-
 #==============================================================================
 # Copyright (C) 2020-present Alces Flight Ltd.
 #
@@ -27,31 +26,34 @@
 # https://github.com/openflighthpc/flight-desktop-restapi
 #===============================================================================
 
-source "https://rubygems.org"
+ENV['RACK_ENV'] ||= 'development'
+ENV['BUNDLE_GEMFILE'] ||= File.expand_path('../Gemfile', __dir__)
 
-git_source(:github) { |repo_name| "https://github.com/#{repo_name}" }
+require 'rubygems'
+require 'bundler'
+require 'json'
 
-gem 'activesupport', require: 'active_support/all'
-gem 'flight_auth', github: "openflighthpc/flight_auth", branch: "297cb7241b820d334e5d593c4e237a81b83a9995"
-gem 'flight_configuration', github: 'openflighthpc/flight_configuration', branch: '24928260e542768f13cc513a3a08af69f690dfbc'
-gem 'hashie'
-gem 'puma'
-gem 'rpam-ruby19', require: 'rpam'
-gem 'sinatra', require: 'sinatra/base'
-gem 'sinatra-namespace'
-gem 'sinatra-cross_origin'
-
-group :development, :test do
-  group :pry do
-    gem 'pry'
-    gem 'pry-byebug'
-  end
+if ENV['RACK_ENV'] == 'development'
+  Bundler.require(:default, :development)
+elsif ENV['RACK_ENV'] == 'test'
+  Bundler.require(:default, :test)
+else
+  Bundler.require(:default)
 end
 
-group :test do
-  gem 'fakefs', require: 'fakefs/safe'
-  gem 'rack-test'
-  gem 'rspec'
-  gem 'rspec-collection_matchers'
-end
+lib = File.expand_path('../lib', __dir__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+
+require 'flight_desktop_restapi'
+require_relative 'initializers/logger'
+
+# Ensures the shared secret exists
+FlightDesktopRestAPI.config.auth_decoder
+
+require_relative '../app/system_command'
+require_relative '../app/errors'
+require_relative '../app/models'
+require_relative 'initializers/version_check'
+require_relative 'initializers/desktop_types'
+require_relative '../app'
 

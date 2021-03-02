@@ -1,7 +1,5 @@
-# frozen_string_literal: true
-
 #==============================================================================
-# Copyright (C) 2020-present Alces Flight Ltd.
+# Copyright (C) 2021-present Alces Flight Ltd.
 #
 # This file is part of FlightDesktopRestAPI.
 #
@@ -27,31 +25,25 @@
 # https://github.com/openflighthpc/flight-desktop-restapi
 #===============================================================================
 
-source "https://rubygems.org"
+module FlightDesktopRestAPI
+  class Configuration
+    extend FlightConfiguration::RackDSL
 
-git_source(:github) { |repo_name| "https://github.com/#{repo_name}" }
+    root_path File.expand_path('../..', __dir__)
+    application_name 'flight-desktop-restapi'
 
-gem 'activesupport', require: 'active_support/all'
-gem 'flight_auth', github: "openflighthpc/flight_auth", branch: "297cb7241b820d334e5d593c4e237a81b83a9995"
-gem 'flight_configuration', github: 'openflighthpc/flight_configuration', branch: '24928260e542768f13cc513a3a08af69f690dfbc'
-gem 'hashie'
-gem 'puma'
-gem 'rpam-ruby19', require: 'rpam'
-gem 'sinatra', require: 'sinatra/base'
-gem 'sinatra-namespace'
-gem 'sinatra-cross_origin'
+    attribute 'bind_address',       default: 'tcp://127.0.0.1:915'
+    attribute 'cors_domain',        required: false
+    attribute 'refresh_rate',       default: 3600
+    attribute 'log_level',          default: 'info'
+    attribute 'shared_secret_path', default: 'etc/shared-secret.conf',
+                                    transform: relative_to(root_path)
+    attribute 'sso_cookie_name',    default: 'flight_login'
+    attribute 'desktop_command',    default: 'flight desktop'
 
-group :development, :test do
-  group :pry do
-    gem 'pry'
-    gem 'pry-byebug'
+    def auth_decoder
+      @auth_decoder ||= FlightAuth::Builder.new(shared_secret_path)
+    end
   end
-end
-
-group :test do
-  gem 'fakefs', require: 'fakefs/safe'
-  gem 'rack-test'
-  gem 'rspec'
-  gem 'rspec-collection_matchers'
 end
 

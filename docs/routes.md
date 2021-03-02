@@ -12,16 +12,14 @@ All requests SHOULD set the following headers:
 
 ```
 # All Routes
-Authorization: Basic <base64 encoded username:password>
+Authorization: Bearer <token>
 Accepts: application/json
 
 # NON GET Routes
 Content-Type: application/json
 ```
 
-The `Authorization` header is a base64 encoded `<username>:<password>` tuple. The `username` and `password` SHOULD match the underlining system according to the [pam sshd config](https://www.pks.mpg.de/~mueller/docs/suse10.1/suselinux-manual_en/manual/sec.pam.struc.format.html). This MAY be changed to any other `pam` config.
-
-The following error SHALL be returned if the `pam` authentication check fails:
+The `Authorization` header SHOULD be an `Bearer` token issued by an appropriate authentication service. It MAY alternative use a `cookie` given by the `sso_cookie_name` configuration. The following SHALL be returned if the token can not be verified:
 
 ```
 HTTP/2 401 Unauthorized
@@ -77,7 +75,7 @@ Return a list of all currently running desktop sessions for the identified user.
 
 ```
 GET /sessions
-Authorization: Basic <base64 encoded username:password>
+Authorization: Bearer <token>
 Accepts: application/json
 
 HTTP/2 200 OK
@@ -95,7 +93,7 @@ To retrieve the screenshot for each session:
 
 ```
 GET /sessions?include=screenshot
-Authorization: Basic <base64 encoded username:password>
+Authorization: Bearer <token>
 Accepts: application/json
 
 HTTP/2 200 OK
@@ -113,7 +111,7 @@ Returns an instance of a running session. The `include=screenshot` query paramet
 
 ```
 GET /sessions/:id
-Authorization: Basic <base64 encoded username:password>
+Authorization: Bearer <token>
 Accepts: application/json
 
 HTTP/2 200 OK
@@ -132,7 +130,7 @@ HTTP/2 200 OK
 # When the screenshot is included
 
 GET /sessions/:id?include=screenshot
-Authorization: Basic <base64 encoded username:password>
+Authorization: Bearer <token>
 Accepts: application/json
 
 HTTP/2 200 OK
@@ -223,7 +221,7 @@ Start a new vnc session with the given `desktop` type.
 
 ```
 POST /sessions
-Authorization: Basic <base64 encoded username:password>
+Authorization: Bearer <token>
 Accepts: application/json
 Content-Type: application/json
 
@@ -277,7 +275,7 @@ Will attempt to kill an actively running session and permanently remove its conf
 
 ```
 DELETE /sessions/:id`
-Authorization: Basic <base64 encoded username:password>
+Authorization: Bearer <token>
 Accepts: application/json
 {
   "strategy": "<kill|clean>"
@@ -291,7 +289,7 @@ HTTP/2 204 No Content
 The request SHALL return `204 No Content` after it has successfully cleaned a broken session. Actively running session can not be cleaned and SHALL respond with `400 Bad Request`.
 ```
 DELETE /sessions/:id`
-Authorization: Basic <base64 encoded username:password>
+Authorization: Bearer <token>
 Accepts: application/json
 {
   "strategy": "clean"
@@ -318,7 +316,7 @@ Retrieve the screenshot associated with a session as `image/png`. This route can
 
 ```
 GET /sessions/:id/screenshot.png
-Authorization: Basic <base64 encoded username:password>
+Authorization: Bearer <token>
 Accepts: image/png
 
 HTTP/2 200 OK
@@ -338,7 +336,7 @@ Returns a list of the currently available desktops. The list MAY contain desktop
 
 ```
 GET /desktops
-Authorization: Basic <base64 encoded username:password>
+Authorization: Bearer <token>
 Accepts: application/json
 
 HTTP/2 200 OK
@@ -356,7 +354,7 @@ Returns metadata about a particular `desktop`.
 
 ```
 GET /desktop/:id
-Authorization: Basic <base64 encoded username:password>
+Authorization: Bearer <token>
 Accepts: application/json
 
 HTTP/2 200 OK

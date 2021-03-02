@@ -28,7 +28,6 @@
 #===============================================================================
 
 require 'sinatra'
-require 'sinatra/namespace'
 
 configure do
   set :bind, '0.0.0.0'
@@ -36,7 +35,7 @@ configure do
   set :raise_errors, true
   set :show_exceptions, false
 
-  enable :cross_origin if Figaro.env.cors_domain
+  enable :cross_origin if FlightDesktopRestAPI.config.cors_domain
 end
 
 not_found do
@@ -62,13 +61,7 @@ end
 before do
   content_type 'application/json'
 
-  response.headers['Access-Control-Allow-Origin'] = Figaro.env.cors_domain if Figaro.env.cors_domain
-end
-
-class PamAuth
-  def self.valid?(username, password)
-    Rpam.auth(username, password, service: Figaro.env.pam_conf!)
-  end
+  response.headers['Access-Control-Allow-Origin'] = FlightDesktopRestAPI.config.cors_domain if FlightDesktopRestAPI.config.cors_domain
 end
 
 helpers do
@@ -78,13 +71,13 @@ end
 # Validates the user's credentials from the authorization header
 before do
   next if env['REQUEST_METHOD'] == 'OPTIONS'
-  parts = (env['HTTP_AUTHORIZATION'] || '').chomp.split(' ')
-  raise Unauthorized unless parts.length == 2 && parts.first == 'Basic'
-  username, password = Base64.decode64(parts.last).split(':', 2)
-  raise RootForbidden if username == 'root'
-  raise Unauthorized unless username && password
-  raise Unauthorized unless PamAuth.valid?(username, password)
-  self.current_user = username
+  auth = FlightDesktopRestAPI.config.auth_decoder.decode(
+    request.cookies[FlightDesktopRestAPI.app.config.sso_cookie_name],
+    env['HTTP_AUTHORIZATION']
+  )
+  raise Unauthorized unless auth.valid?
+  self.current_user = auth.username
+  raise RootForbidden if current_user == 'root'
 end
 
 # Checks the request Content-Type is application/json where appropriate
@@ -109,7 +102,7 @@ before do
   end
 end
 
-if Figaro.env.cors_domain
+if FlightDesktopRestAPI.config.cors_domain
   options "*" do
     response.headers["Allow"] = "GET, PUT, POST, DELETE, OPTIONS"
     response.headers["Access-Control-Allow-Methods"] = "GET, PUT, POST, DELETE, OPTIONS"

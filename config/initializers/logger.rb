@@ -28,7 +28,7 @@
 #===============================================================================
 
 DEFAULT_LOGGER = Logger.new($stdout).tap do |logger|
-  logger.level = case Figaro.env.log_level!.to_s
+  logger.level = case FlightDesktopRestAPI.config.log_level.to_s
   when 'fatal'
     Logger::FATAL
   when 'error'
@@ -42,11 +42,5 @@ DEFAULT_LOGGER = Logger.new($stdout).tap do |logger|
   else
     raise 'Unrecognised log level'
   end
-end
-
-configure do
-  set :show_exceptions, :after_handler
-  set :logger, DEFAULT_LOGGER
-  enable :logging
 end
 
