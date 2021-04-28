@@ -34,6 +34,7 @@ module FlightDesktopRestAPI
 
     attribute 'bind_address',       default: 'tcp://127.0.0.1:915'
     attribute 'cors_domain',        required: false
+    attribute 'short_refresh_rate', default: 300
     attribute 'refresh_rate',       default: 3600
     attribute 'log_level',          default: 'info'
     attribute 'shared_secret_path', default: 'etc/shared-secret.conf',
