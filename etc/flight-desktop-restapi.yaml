@@ -52,20 +52,20 @@
 # 'short_refresh_rate'. This will only detect desktops which have been
 # previously verified.
 #
-# All the desktops will be verified less frequently approximately according to
-# the 'refresh_rate'. This may run slightly more frequently than expected unless
-# 'refresh_rate' is a whole-interval of 'short_refresh_rate'.
+# All the desktops will be verified less frequently, at intervals no longer
+# than "refresh_rate". The "refresh_rate" should be a multiple of the
+# "short_refresh_rate", otherwise a different interval will be used. The
+# "refresh_rate" must be equal to or longer than the "short_refresh_rate".
 #
 # NOTE: As the avail/verify checks run periodically, a timeout is used to
 # ensure they run at regular intervals. This timeout is determined from the
 # "short_refresh_rate". Therefore the "short_refresh_rate" must be sufficiently
-# long to allow for all the desktops to be "verified". The "short_refresh_rate"
-# must also be less than or equal to the "refresh_rate".
+# long to allow for all the desktops to be "verified".
 #
 # The environment variables flight_DESKTOP_RESTAPI_refresh_rate and
 # flight_DESKTOP_RESTAPI_short_refresh_rate takes precedence.
 # =============================================================================
-# short_refresh_rate: 3600
+# short_refresh_rate: 300
 # refresh_rate: 3600
 
 # =============================================================================
