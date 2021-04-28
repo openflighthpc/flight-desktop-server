@@ -51,7 +51,7 @@ Concurrent::TimerTask.new(**opts) do |task|
                         .each_line.map do |line|
     data = line.split("\t")
     home = data[2].empty? ? nil : data[2]
-    verified = data[3] == 'Verified'
+    verified = (data[3].chomp == 'Verified')
     Desktop.new(name: data[0], summary: data[1], homepage: home, verified: verified)
   end
 
