@@ -32,11 +32,12 @@ require 'base64'
 class Session < Hashie::Trash
   include Hashie::Extensions::Dash::Coercion
 
-  def self.index(user:)
+  def self.index(user:, reload: true)
     cache_dir = SystemCommand::Handlers.load_cache_dir(user: user)
     cmd = SystemCommand.index_sessions(user: user)
     if cmd.success?
-      cmd.stdout.split("\n").map do |line|
+      # Load the sessions and return if skipping the reload
+      sessions = cmd.stdout.split("\n").map do |line|
         parts = line.split("\t").map { |p| p.empty? ? nil : p }
         loader(
           id: parts[0],
@@ -51,6 +52,20 @@ class Session < Hashie::Trash
           cache_dir: cache_dir
         )
       end
+      return sessions unless reload
+
+      # Checks if any sessions need to be "webified" or return
+      ids = sessions.select { |s| s.webport == '0' && s.state == 'Active' }.map(&:id)
+      return sessions if ids.empty?
+
+      # Webify the sessions
+      # NOTE: Consider refactoring flight-desktop to implicitly webify all
+      #       required sessions. Running 'webify_session' once per session
+      #       adds unnecessary overhead. This could be done in a single command
+      ids.each { |id| SystemCommand.webify_session(id, user: user) }
+
+      # Reload the sessions to get the port
+      index(user: user, reload: false)
     else
       raise InternalServerError
     end
@@ -64,21 +79,6 @@ class Session < Hashie::Trash
   def self.find_by_indexing(id, user:)
     sessions = index(user: user)
     sessions.find { |s| s.id == id }
-  end
-
-  # NOTE: The flight desktop command generates a UUID for each session, however
-  # it also allows accepts shortened versions. This means their is some "fuzziness"
-  # in the ID.
-  #
-  # Revists as necessary, we may want to disable this
-  #
-  # NOTE: GOTCHA
-  # This method does not return the websockify port. It is being maintained for
-  # prosperity
-  def self.find_by_fuzzy_id(fuzzy_id, user:)
-    cmd = SystemCommand.find_session(fuzzy_id, user: user)
-    return nil unless cmd.code == 0
-    build_from_output(cmd.stdout, user: user)
   end
 
   def self.build_from_output(lines, user:)

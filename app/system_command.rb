@@ -134,6 +134,10 @@ class SystemCommand < Hashie::Dash
     Builder.new("#{FlightDesktopRestAPI.config.desktop_command} start").call(desktop, user: user)
   end
 
+  def self.webify_session(id, user:)
+    Builder.new("#{FlightDesktopRestAPI.config.desktop_command} webify").call(id, user: user)
+  end
+
   def self.kill_session(id, user:)
     Builder.new("#{FlightDesktopRestAPI.config.desktop_command} kill").call(id, user: user)
   end
