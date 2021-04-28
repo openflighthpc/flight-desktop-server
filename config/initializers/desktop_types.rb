@@ -51,7 +51,8 @@ Concurrent::TimerTask.new(**opts) do |task|
                         .each_line.map do |line|
     data = line.split("\t")
     home = data[2].empty? ? nil : data[2]
-    Desktop.new(name: data[0], summary: data[1], homepage: home)
+    verified = data[3] == 'Verified'
+    Desktop.new(name: data[0], summary: data[1], homepage: home, verified: verified)
   end
 
   models.each { |m| m.verify_desktop(user: ENV['USER']) } if count == 0
