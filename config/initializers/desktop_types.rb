@@ -55,10 +55,17 @@ Concurrent::TimerTask.new(**opts) do |task|
     Desktop.new(name: data[0], summary: data[1], homepage: home, verified: verified)
   end
 
-  models.each { |m| m.verify_desktop(user: ENV['USER']) } if count == 0
+  # Set the initial state of the desktops
   hash = models.map { |m| [m.name, m] }.to_h
-
   Desktop.instance_variable_set(:@cache, hash)
+
+  # Preform the additional verification step (when required)
+  if count == 0
+    models.each { |m| m.verify_desktop(user: ENV['USER']) }
+    hash = models.map { |m| [m.name, m] }.to_h
+    Desktop.instance_variable_set(:@cache, hash)
+  end
+
   DEFAULT_LOGGER.info "Finished #{'re' unless first}loading the desktops"
   first = false
   count = (count + 1) % verify_interval
