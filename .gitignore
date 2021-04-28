@@ -12,6 +12,7 @@
 /var
 /log
 /vendor
+etc/*.local.yaml
 etc/shared-secret.conf
 
 # NOTE: This is a general ignore all yaml files in the config directory

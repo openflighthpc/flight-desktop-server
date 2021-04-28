@@ -26,16 +26,16 @@
 #===============================================================================
 
 # =============================================================================
-# Pam Configuration Name [DEFAULT]
+# Bind Address
 # Specify which pam configuration file should be used to authenticate requests.
 # It should correlate to a filename stored within /etc/pam.d
 #
-# The environment variable flight_DESKTOP_RESTAPI_pam_conf takes precedence.
+# The environment variable flight_DESKTOP_RESTAPI_bind_address takes precedence.
 # =============================================================================
-# pam_conf:
+# bind_address: tcp://127.0.0.1:915
 
 # =============================================================================
-# CORS Domain [OPTIONAL]
+# CORS Domain
 # Enable cross origin resource sharing from the given domain. CORS is disabled
 # by default
 #
@@ -50,13 +50,44 @@
 #
 # The environment variable flight_DESKTOP_RESTAPI_refresh_rate takes precedence.
 # =============================================================================
-# refresh_rate:
+# refresh_rate: 3600
 
 # =============================================================================
-# Log Level [DEFAULT]
+# Desktop Command
+#
+# The prefix used to run the flight-desktop command line utility
+#
+# The environment variable flight_DESKTOP_RESTAPI_desktop_command takes
+# precedence.
+# =============================================================================
+# desktop_command: flight desktop
+
+# =============================================================================
+# Shared Secret Path
+# The path to the file containing the shared secret used to verify the login
+# credentials.
+#
+# The environment variable flight_DESKTOP_RESTAPI_shared_secret_path takes
+# precedence.
+#
+# Relative paths are expanded from the installation directory.
+# =============================================================================
+# shared_secret_path: etc/shared-secret.conf
+
+# =============================================================================
+# SSO Cookie Domain
+# The name of cookie used to store the login credentials
+#
+# The environment variable flight_DESKTOP_RESTAPI_sso_cookie_domain takes
+# precedence.
+# =============================================================================
+# sso_cookie_name: flight_login
+
+# =============================================================================
+# Log Level
 # Specify which level of logging should be used. The supported values are:
 # fatal, error, warn, info, or debug
 #
 # The environment variable flight_DESKTOP_RESTAPI_log_level takes precedence.
 # =============================================================================
-# log_level:
+# log_level: info
