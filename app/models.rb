@@ -66,21 +66,6 @@ class Session < Hashie::Trash
     sessions.find { |s| s.id == id }
   end
 
-  # NOTE: The flight desktop command generates a UUID for each session, however
-  # it also allows accepts shortened versions. This means their is some "fuzziness"
-  # in the ID.
-  #
-  # Revists as necessary, we may want to disable this
-  #
-  # NOTE: GOTCHA
-  # This method does not return the websockify port. It is being maintained for
-  # prosperity
-  def self.find_by_fuzzy_id(fuzzy_id, user:)
-    cmd = SystemCommand.find_session(fuzzy_id, user: user)
-    return nil unless cmd.code == 0
-    build_from_output(cmd.stdout, user: user)
-  end
-
   def self.build_from_output(lines, user:)
     lines = lines.split("\n") if lines.is_a?(String)
     data = lines.each_with_object({}) do |line, memo|
