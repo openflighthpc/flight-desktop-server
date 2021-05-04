@@ -92,7 +92,13 @@ RSpec.configure do |c|
   end
 
   def standard_get_headers
-    header 'Authorization', "Basic #{Base64.encode64("#{username}:#{password}")}"
+    $stdout = StringIO.new
+    FlightAuth::CLI.new(FlightDesktopRestAPI.config.shared_secret_path, 'desktop-restapi-test')
+                   .run
+    $stdout.rewind
+    header 'Authorization', "Bearer #{$stdout.read.chomp}"
+  ensure
+    $stdout = STDOUT
   end
 
   def standard_post_headers
@@ -100,7 +106,13 @@ RSpec.configure do |c|
     header 'Content-Type', 'application/json'
   end
 
-  c.around { |e| FakeFS.with { e.call } }
+  # Enable FakeFS
+  c.around do |example|
+    FakeFS.with do
+      FakeFS::FileSystem.clone FlightDesktopRestAPI.config.shared_secret_path
+      example.call
+    end
+  end
 
   c.before do
     # Disable the SystemCommand::Builder from creating commands
