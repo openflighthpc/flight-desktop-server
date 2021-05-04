@@ -72,14 +72,17 @@ class Session < Hashie::Trash
     end
   end
 
-  # NOTE: This is a "temporary" method which will find a session using the index
-  # command. This work around is required b/c indexing returns the webport but
-  # the find command does not.
-  #
-  # Remove this when it becomes obsolete
-  def self.find_by_indexing(id, user:)
-    sessions = index(user: user)
-    sessions.find { |s| s.id == id }
+  def self.find(id, user:)
+    cmd = SystemCommand.find_session(id, user: user)
+    if cmd.success?
+      build_from_output(cmd.stdout.split("\n"), user: user)
+    else
+      # Technically multiple errors conditions could cause the command to fail
+      # However the exit code is always the same.
+      #
+      # It is assumed that the primary reason for the error is because the session is missing
+      nil
+    end
   end
 
   def self.build_from_output(lines, user:)
@@ -129,7 +132,7 @@ class Session < Hashie::Trash
     case time
     when Time
       time
-    when NilClass
+    when NilClass, ''
       # The API assumes the 'created_at' time is always set, thus
       # it defaults to now.
       # NOTE: The underlying CLI will no longer return inconsistent
@@ -143,7 +146,7 @@ class Session < Hashie::Trash
     case time
     when Time
       time
-    when NilClass
+    when NilClass, ''
       nil
     else
       Time.parse(time.to_s)
