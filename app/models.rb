@@ -28,18 +28,18 @@
 #===============================================================================
 
 require 'base64'
+require 'time'
 
 class Session < Hashie::Trash
   include Hashie::Extensions::Dash::Coercion
 
   def self.index(user:, reload: true)
-    cache_dir = SystemCommand::Handlers.load_cache_dir(user: user)
     cmd = SystemCommand.index_sessions(user: user)
     if cmd.success?
       # Load the sessions and return if skipping the reload
       sessions = cmd.stdout.split("\n").map do |line|
         parts = line.split("\t").map { |p| p.empty? ? nil : p }
-        loader(
+        new(
           id: parts[0],
           desktop: parts[1],
           hostname: parts[2],
@@ -48,8 +48,9 @@ class Session < Hashie::Trash
           webport: parts[6],
           password: parts[7],
           state: parts[8],
-          user: user,
-          cache_dir: cache_dir
+          created_at: parts[9],
+          last_accessed_at: parts[10],
+          user: user
         )
       end
       return sessions unless reload
@@ -116,8 +117,30 @@ class Session < Hashie::Trash
   property :password
   property :user
   property :state
-  property :created_at, coerce: Time
-  property :last_accessed_at, coerce: Time
+  property :created_at, transform_with: ->(time) {
+    case time
+    when Time
+      time
+    when NilClass
+      # The API assumes the 'created_at' time is always set, thus
+      # it defaults to now.
+      # NOTE: The underlying CLI will no longer return inconsistent
+      # created_at and last_accessed_at times.
+      Time.now
+    else
+      Time.parse(time.to_s)
+    end
+  }
+  property :last_accessed_at, transform_with: ->(time) {
+    case time
+    when Time
+      time
+    when NilClass
+      nil
+    else
+      Time.parse(time.to_s)
+    end
+  }
   property :cache_dir
   property :screenshot
 
