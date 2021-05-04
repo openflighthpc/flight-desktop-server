@@ -171,34 +171,9 @@ class Session < Hashie::Trash
     path.empty? ? nil : path
   end
 
-  def self.loader(*a)
-    new(*a).tap do |session|
-      session.cache_dir ||= SystemCommand::Handlers.load_cache_dir(user: session.user)
-      session.created_at ||= begin
-        path = File.join(session.cache_dir,
-                         'flight/desktop/sessions',
-                         session.id,
-                         'metadata.yml')
-        File::Stat.new(path).ctime
-      end
-      session.last_accessed_at ||= begin
-        path = File.join(session.cache_dir,
-                         'flight/desktop/sessions',
-                         session.id,
-                         'session.log')
-        File::Stat.new(path).ctime if File.exists? path
-      end
-    end
-  end
-
   def screenshot
     return false if @screenshot == false
     @screenshot ||= (Screenshot.new(self).read || false)
-  end
-
-  # TODO: Remove me
-  def load_screenshot
-    screenshot
   end
 
   def to_json
