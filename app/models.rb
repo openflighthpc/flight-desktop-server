@@ -85,7 +85,7 @@ class Session < Hashie::Trash
   def self.build_from_output(lines, user:)
     lines = lines.split("\n") if lines.is_a?(String)
     data = lines.each_with_object({}) do |line, memo|
-      parts = line.split(/\s+/)
+      parts = line.split(/\t/, 2)
       value = parts.pop
       key = case parts.join(' ')
       when 'Identity'
@@ -100,12 +100,20 @@ class Session < Hashie::Trash
         :password
       when 'Type'
         :desktop
+      when 'State'
+        :state
+      when 'Web Socket Port'
+        :webport
+      when 'Created At'
+        :created_at
+      when 'Last Accessed At'
+        :last_accessed_at
       else
         next # Ignore any extraneous keys
       end
       memo[key] = value
     end
-    loader(user: user, **data)
+    new(user: user, **data)
   end
 
   property :id
@@ -269,7 +277,7 @@ class Desktop < Hashie::Trash
       cmd = SystemCommand.start_session(name, user: user)
     end
     raise InternalServerError unless cmd.success?
-    Session.build_from_output(cmd.stdout.split("\n").last(7), user: user)
+    Session.build_from_output(cmd.stdout.split("\n"), user: user)
   end
 
   def verify_desktop(user:)
