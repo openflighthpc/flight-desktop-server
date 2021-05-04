@@ -103,10 +103,6 @@ RSpec.configure do |c|
   c.around { |e| FakeFS.with { e.call } }
 
   c.before do
-    # Disable RPAM from running in the spec. This way users don't need configuring
-    # It will always return authenticated unless otherwise stubbed
-    allow(PamAuth).to receive(:valid?).and_return(true)
-
     # Disable the SystemCommand::Builder from creating commands
     # This forces all system commands to be mocked
     allow(SystemCommand::Builder).to receive(:new).and_wrap_original do |_, *a|
@@ -114,12 +110,6 @@ RSpec.configure do |c|
         Running system commands is not supported in the spec. The following
         needs to be stubbed: '#{a.first}'
       ERROR
-    end
-
-    # Always allow the SystemCommands for the cache directory as they will
-    # likely always succeed [unless something terrible happens]
-    allow(SystemCommand).to receive(:echo_cache_dir).and_wrap_original do
-      SystemCommand.new(stderr: '', code: 0, stdout: "#{cache_dir}\n")
     end
   end
 end
