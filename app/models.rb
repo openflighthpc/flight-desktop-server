@@ -72,10 +72,20 @@ class Session < Hashie::Trash
     end
   end
 
-  def self.find(id, user:)
+  def self.find(id, reload: true, user:)
     cmd = SystemCommand.find_session(id, user: user)
     if cmd.success?
-      build_from_output(cmd.stdout.split("\n"), user: user)
+      session = build_from_output(cmd.stdout.split("\n"), user: user)
+
+      # Stop the recursion
+      return session unless reload
+
+      # Checks if the session needs to be webified
+      return session unless session.webport == '0' && session.state == 'Active'
+
+      # Webify the session and reload
+      SystemCommand.webify_session(id, user: user)
+      find(id, reload: false, user: user)
     else
       # Technically multiple errors conditions could cause the command to fail
       # However the exit code is always the same.
