@@ -156,8 +156,11 @@ class Session < Hashie::Trash
   end
 
   def screenshot
-    return false if @screenshot == false
-    @screenshot ||= (Screenshot.new(self).read || false)
+    @screenshot || false
+  end
+
+  def load_screenshot
+    @screenshot ||= Screenshot.new(self).read
   end
 
   def to_json
