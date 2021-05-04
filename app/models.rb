@@ -50,6 +50,7 @@ class Session < Hashie::Trash
           state: parts[8],
           created_at: parts[9],
           last_accessed_at: parts[10],
+          screenshot_path: parts[11],
           user: user
         )
       end
@@ -121,6 +122,8 @@ class Session < Hashie::Trash
         :created_at
       when 'Last Accessed At'
         :last_accessed_at
+      when 'Screenshot Path'
+        :screenshot_path
       else
         next # Ignore any extraneous keys
       end
@@ -163,7 +166,10 @@ class Session < Hashie::Trash
     end
   }
   property :cache_dir
-  property :screenshot
+  property :screenshot_path, transform_with: ->(path) do
+    path = path.to_s
+    path.empty? ? nil : path
+  end
 
   def self.loader(*a)
     new(*a).tap do |session|
@@ -185,8 +191,14 @@ class Session < Hashie::Trash
     end
   end
 
+  def screenshot
+    return false if @screenshot == false
+    @screenshot ||= (Screenshot.new(self).read || false)
+  end
+
+  # TODO: Remove me
   def load_screenshot
-    self.screenshot = Screenshot.new(self).read || false
+    screenshot
   end
 
   def to_json
@@ -205,8 +217,7 @@ class Session < Hashie::Trash
       'created_at' => created_at.rfc3339,
       'last_accessed_at' => last_accessed_at&.rfc3339
     }.tap do |h|
-      h['screenshot'] = Base64.encode64 screenshot if screenshot
-      h['screenshot'] = nil if screenshot == false
+      h['screenshot'] = screenshot ? Base64.encode64(screenshot) : nil
     end
   end
 
@@ -302,13 +313,6 @@ class Desktop < Hashie::Trash
 end
 
 Screenshot = Struct.new(:session) do
-  # Stored as a class method so it can be stubbed in the tests
-  def self.path(username, id)
-    cmd = SystemCommand.echo_cache_dir(user: username)
-    cmd.raise_unless_successful
-    File.join(cmd.stdout.chomp, 'flight/desktop/sessions', id, 'session.png')
-  end
-
   def base64_encode
     Base64.encode64(read)
   end
@@ -318,8 +322,9 @@ Screenshot = Struct.new(:session) do
   end
 
   def read
-    p = self.class.path(session.user, session.id)
-    File.exists?(p) ? File.read(p) : nil
+    path = session.screenshot_path
+    return nil unless path
+    File.exists?(path) ? File.read(path) : nil
   end
 end
 
