@@ -33,11 +33,10 @@ require 'time'
 class Session < Hashie::Trash
   include Hashie::Extensions::Dash::Coercion
 
-  def self.index(user:, reload: true)
+  def self.index(user:)
     cmd = SystemCommand.index_sessions(user: user)
     if cmd.success?
-      # Load the sessions and return if skipping the reload
-      sessions = cmd.stdout.split("\n").map do |line|
+      cmd.stdout.split("\n").map do |line|
         parts = line.split("\t").map { |p| p.empty? ? nil : p }
         new(
           id: parts[0],
@@ -54,20 +53,6 @@ class Session < Hashie::Trash
           user: user
         )
       end
-      return sessions unless reload
-
-      # Checks if any sessions need to be "webified" or return
-      ids = sessions.select { |s| s.webport == '0' && s.state == 'Active' }.map(&:id)
-      return sessions if ids.empty?
-
-      # Webify the sessions
-      # NOTE: Consider refactoring flight-desktop to implicitly webify all
-      #       required sessions. Running 'webify_session' once per session
-      #       adds unnecessary overhead. This could be done in a single command
-      ids.each { |id| SystemCommand.webify_session(id, user: user) }
-
-      # Reload the sessions to get the port
-      index(user: user, reload: false)
     else
       raise InternalServerError
     end
