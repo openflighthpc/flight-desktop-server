@@ -462,7 +462,6 @@ RSpec.describe '/sessions' do
         # NOTE: "Temporarily" out of use
         # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
-        allow(SystemCommand).to receive(:echo_cache_dir).and_return(exit_213_stub)
         make_request
         expect(last_response.status).to be(500)
       end

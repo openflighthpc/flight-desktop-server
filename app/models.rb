@@ -150,7 +150,6 @@ class Session < Hashie::Trash
       Time.parse(time.to_s)
     end
   }
-  property :cache_dir
   property :screenshot_path, transform_with: ->(path) do
     path = path.to_s
     path.empty? ? nil : path
