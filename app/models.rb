@@ -171,44 +171,9 @@ class Session < Hashie::Trash
     path.empty? ? nil : path
   end
 
-  def self.loader(*a)
-    new(*a).tap do |session|
-      session.cache_dir ||= SystemCommand::Handlers.load_cache_dir(user: session.user)
-      session.last_accessed_at ||= begin
-        path = File.join(session.cache_dir,
-                         'flight/desktop/sessions',
-                         session.id,
-                         'session.log')
-        File::Stat.new(path).ctime if File.exists? path
-      end
-      session.created_at ||= begin
-        path = File.join(session.cache_dir,
-                         'flight/desktop/sessions',
-                         session.id,
-                         'metadata.yml')
-        if File.exists? path
-          File::Stat.new(path).ctime
-        else
-          # Broken sessions may not have metadata files and thus do not *technically*
-          # have created_at times. However the code base and API specification all
-          # assume 'created_at' will be set.
-          #
-          # To prevent things from unexpectedly breaking further, a bogus time is
-          # used instead.
-          Time.at(0)
-        end
-      end
-    end
-  end
-
   def screenshot
     return false if @screenshot == false
     @screenshot ||= (Screenshot.new(self).read || false)
-  end
-
-  # TODO: Remove me
-  def load_screenshot
-    screenshot
   end
 
   def to_json
