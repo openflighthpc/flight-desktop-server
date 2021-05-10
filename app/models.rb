@@ -131,11 +131,7 @@ class Session < Hashie::Trash
     when Time
       time
     when NilClass, ''
-      # The API assumes the 'created_at' time is always set, thus
-      # it defaults to now.
-      # NOTE: The underlying CLI will no longer return inconsistent
-      # created_at and last_accessed_at times.
-      Time.now
+      nil
     else
       Time.parse(time.to_s)
     end
@@ -176,7 +172,7 @@ class Session < Hashie::Trash
       'port' => webport,
       'password' => password,
       'state' => state,
-      'created_at' => created_at.rfc3339,
+      'created_at' => created_at&.rfc3339,
       'last_accessed_at' => last_accessed_at&.rfc3339
     }.tap do |h|
       h['screenshot'] = screenshot ? Base64.encode64(screenshot) : nil

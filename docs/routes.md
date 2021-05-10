@@ -123,7 +123,7 @@ HTTP/2 200 OK
   "port": <web-sockify-port>,
   "password": "<vnc-password>",
   "state": "<Active|BROKEN|...>",
-  "created_at": "<time-rfc339>",
+  "created_at": "<None|time-rfc339>",
   "last_accessed_at": "<None|time-rfc3339>"
 }
 
@@ -180,7 +180,7 @@ Type: String
 
 *created_at*
 
-The time the session was created
+The time the session was created.  This field MAY be NONE for some broken sessions.
 
 Type: [String - RFC3339 Timestamp](https://tools.ietf.org/html/rfc3339)
 
