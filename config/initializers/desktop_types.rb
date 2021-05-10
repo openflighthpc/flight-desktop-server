@@ -30,18 +30,16 @@
 # NOTE: All desktops must be stubbed in the spec
 return if ENV['RACK_ENV'] == 'test'
 
-# Determines at which interval the verify command should run
-verify_interval = FlightDesktopRestAPI.config.refresh_rate/ FlightDesktopRestAPI.config.short_refresh_rate
-if verify_interval < 1
-  raise 'The refresh_rate must be greater than, or equal to, the short_refresh_rate!'
+if FlightDesktopRestAPI.config.full_refresh < 1
+  raise 'full_refresh must be greater than 0!'
 end
 first = true
 count = 0
 
 # Periodically reload and verify the desktops
 opts = {
-  execution_interval: FlightDesktopRestAPI.config.short_refresh_rate,
-  timeout_interval: (FlightDesktopRestAPI.config.short_refresh_rate - 1),
+  execution_interval: FlightDesktopRestAPI.config.refresh_rate,
+  timeout_interval: (FlightDesktopRestAPI.config.refresh_rate - 1),
   run_now: true
 }
 Concurrent::TimerTask.new(**opts) do |task|
@@ -59,7 +57,7 @@ Concurrent::TimerTask.new(**opts) do |task|
   hash = models.map { |m| [m.name, m] }.to_h
   Desktop.instance_variable_set(:@cache, hash)
 
-  # Preform the additional verification step (when required)
+  # Perform the additional verification step (when required).
   if count == 0
     models.each { |m| m.verify_desktop(user: ENV['USER']) }
     hash = models.map { |m| [m.name, m] }.to_h
@@ -68,5 +66,8 @@ Concurrent::TimerTask.new(**opts) do |task|
 
   DEFAULT_LOGGER.info "Finished #{'re' unless first}loading the desktops"
   first = false
-  count = (count + 1) % verify_interval
+  count += 1
+  if count >= FlightDesktopRestAPI.config.full_refresh
+    count = 0
+  end
 end.execute
