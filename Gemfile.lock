@@ -96,6 +96,7 @@ PLATFORMS
 
 DEPENDENCIES
   activesupport
+  concurrent-ruby
   fakefs
   flight_auth!
   flight_configuration!

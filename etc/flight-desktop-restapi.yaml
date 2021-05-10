@@ -44,13 +44,24 @@
 # cors_domain:
 
 # =============================================================================
-# Refresh Rate
-# Sets how often the desktops are verified. It may take up to this length of
-# time before a desktop appears verified. Must be a time in seconds
+# Refresh Rates
+# The `refresh_rate` is used to control how frequently the available desktops
+# are checked and verified.
 #
-# The environment variable flight_DESKTOP_RESTAPI_refresh_rate takes precedence.
+# A quick check is made every `refresh_rate` seconds.  A full refresh is made
+# every `full_refresh` * `refresh_rate` seconds.
+#
+# A full refresh is required as the quick refresh may fail to correctly
+# identify that a desktop type is verified.
+#
+# NOTE: The "refresh_rate" must be sufficiently long to allow for all the
+# desktops to be "verified".
+#
+# The environment variables flight_DESKTOP_RESTAPI_refresh_rate and
+# flight_DESKTOP_RESTAPI_full_refresh takes precedence.
 # =============================================================================
-# refresh_rate: 3600
+# refresh_rate: 300
+# full_refresh: 12
 
 # =============================================================================
 # Desktop Command

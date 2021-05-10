@@ -147,7 +147,7 @@ class SystemCommand < Hashie::Dash
   end
 
   def self.verify_desktop(desktop, user:)
-    Builder.new("#{FlightDesktopRestAPI.config.desktop_command} verify").call(desktop, user: user)
+    Builder.new("#{FlightDesktopRestAPI.config.desktop_command} verify --force").call(desktop, user: user)
   end
 
   def self.avail_desktops(user:)
