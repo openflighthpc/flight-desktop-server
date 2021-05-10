@@ -145,9 +145,7 @@ class Session < Hashie::Trash
           #
           # To prevent things from unexpectedly breaking further, a bogus time is
           # used instead.
-          #
-          # Consider Refactoring.
-          session.last_accessed_at || Time.now
+          Time.at(0)
         end
       end
     end
