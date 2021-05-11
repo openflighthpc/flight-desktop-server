@@ -120,49 +120,6 @@ RSpec.describe '/sessions' do
         expect(last_response.status).to be(500)
       end
     end
-
-    # NOTE: This is only required whilst find_by_indexing is in use
-    # If and when find_session is used again, this spec can be removed
-    context 'when the index does not include the session' do
-      let(:url_id) { '6bbf0bcf-4ac0-4d09-af10-ceef1527c087' }
-
-      let(:other1) do
-        build_session(
-          id: "a3207f38-40ed-48df-9a59-4b54f840ced1",
-          desktop: "gnome",
-          ip: '10.1.1.1',
-          hostname: 'example.com',
-          port: 5923,
-          webport: 41401,
-          password: 'b187668d',
-          state: 'Active'
-        )
-      end
-
-      let(:other2) do
-        build_session(
-          id: "2b29efce-2717-45f1-a982-f090cdbf7435",
-          desktop: "gnome",
-          ip: '10.1.1.2',
-          hostname: 'example.com',
-          port: 5924,
-          webport: 41402,
-          password: '8b17ba61',
-          state: 'Active'
-        )
-      end
-
-      let(:sessions) { [other1, other2] }
-
-      before do
-        allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
-        make_request
-      end
-
-      it 'returns 404' do
-        expect(last_response).to be_not_found
-      end
-    end
   end
 
   describe 'GET /sessions' do
@@ -396,8 +353,6 @@ RSpec.describe '/sessions' do
       end
 
       # NOTE: The future of the "fuzzy id" is yet TBD
-      # ATM they are not supported due to find_by_indexing
-      # Revisit as required
       context 'when using a fuzzy id' do
         let(:url_id) { subject.id.split('-').first }
 
@@ -507,7 +462,6 @@ RSpec.describe '/sessions' do
         # NOTE: "Temporarily" out of use
         # allow(SystemCommand).to receive(:find_session).and_return(successful_find_stub)
         allow(SystemCommand).to receive(:index_sessions).and_return(index_multiple_stub)
-        allow(SystemCommand).to receive(:echo_cache_dir).and_return(exit_213_stub)
         make_request
         expect(last_response.status).to be(500)
       end

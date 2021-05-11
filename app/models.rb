@@ -28,18 +28,17 @@
 #===============================================================================
 
 require 'base64'
+require 'time'
 
 class Session < Hashie::Trash
   include Hashie::Extensions::Dash::Coercion
 
-  def self.index(user:, reload: true)
-    cache_dir = SystemCommand::Handlers.load_cache_dir(user: user)
+  def self.index(user:)
     cmd = SystemCommand.index_sessions(user: user)
     if cmd.success?
-      # Load the sessions and return if skipping the reload
-      sessions = cmd.stdout.split("\n").map do |line|
+      cmd.stdout.split("\n").map do |line|
         parts = line.split("\t").map { |p| p.empty? ? nil : p }
-        loader(
+        new(
           id: parts[0],
           desktop: parts[1],
           hostname: parts[2],
@@ -48,43 +47,44 @@ class Session < Hashie::Trash
           webport: parts[6],
           password: parts[7],
           state: parts[8],
-          user: user,
-          cache_dir: cache_dir
+          created_at: parts[9],
+          last_accessed_at: parts[10],
+          screenshot_path: parts[11],
+          user: user
         )
       end
-      return sessions unless reload
-
-      # Checks if any sessions need to be "webified" or return
-      ids = sessions.select { |s| s.webport == '0' && s.state == 'Active' }.map(&:id)
-      return sessions if ids.empty?
-
-      # Webify the sessions
-      # NOTE: Consider refactoring flight-desktop to implicitly webify all
-      #       required sessions. Running 'webify_session' once per session
-      #       adds unnecessary overhead. This could be done in a single command
-      ids.each { |id| SystemCommand.webify_session(id, user: user) }
-
-      # Reload the sessions to get the port
-      index(user: user, reload: false)
     else
       raise InternalServerError
     end
   end
 
-  # NOTE: This is a "temporary" method which will find a session using the index
-  # command. This work around is required b/c indexing returns the webport but
-  # the find command does not.
-  #
-  # Remove this when it becomes obsolete
-  def self.find_by_indexing(id, user:)
-    sessions = index(user: user)
-    sessions.find { |s| s.id == id }
+  def self.find(id, reload: true, user:)
+    cmd = SystemCommand.find_session(id, user: user)
+    if cmd.success?
+      session = build_from_output(cmd.stdout.split("\n"), user: user)
+
+      # Stop the recursion
+      return session unless reload
+
+      # Checks if the session needs to be webified
+      return session unless session.webport == '0' && session.state == 'Active'
+
+      # Webify the session and reload
+      SystemCommand.webify_session(id, user: user)
+      find(id, reload: false, user: user)
+    else
+      # Technically multiple errors conditions could cause the command to fail
+      # However the exit code is always the same.
+      #
+      # It is assumed that the primary reason for the error is because the session is missing
+      nil
+    end
   end
 
   def self.build_from_output(lines, user:)
     lines = lines.split("\n") if lines.is_a?(String)
     data = lines.each_with_object({}) do |line, memo|
-      parts = line.split(/\s+/)
+      parts = line.split(/\t/, 2)
       value = parts.pop
       key = case parts.join(' ')
       when 'Identity'
@@ -99,12 +99,22 @@ class Session < Hashie::Trash
         :password
       when 'Type'
         :desktop
+      when 'State'
+        :state
+      when 'WebSocket Port'
+        :webport
+      when 'Created At'
+        :created_at
+      when 'Last Accessed At'
+        :last_accessed_at
+      when 'Screenshot Path'
+        :screenshot_path
       else
         next # Ignore any extraneous keys
       end
       memo[key] = value
     end
-    loader(user: user, **data)
+    new(user: user, **data)
   end
 
   property :id
@@ -116,43 +126,37 @@ class Session < Hashie::Trash
   property :password
   property :user
   property :state
-  property :created_at, coerce: Time
-  property :last_accessed_at, coerce: Time
-  property :cache_dir
-  property :screenshot
-
-  def self.loader(*a)
-    new(*a).tap do |session|
-      session.cache_dir ||= SystemCommand::Handlers.load_cache_dir(user: session.user)
-      session.last_accessed_at ||= begin
-        path = File.join(session.cache_dir,
-                         'flight/desktop/sessions',
-                         session.id,
-                         'session.log')
-        File::Stat.new(path).ctime if File.exists? path
-      end
-      session.created_at ||= begin
-        path = File.join(session.cache_dir,
-                         'flight/desktop/sessions',
-                         session.id,
-                         'metadata.yml')
-        if File.exists? path
-          File::Stat.new(path).ctime
-        else
-          # Broken sessions may not have metadata files and thus do not *technically*
-          # have created_at times. However the code base and API specification all
-          # assume 'created_at' will be set.
-          #
-          # To prevent things from unexpectedly breaking further, a bogus time is
-          # used instead.
-          Time.at(0)
-        end
-      end
+  property :created_at, transform_with: ->(time) {
+    case time
+    when Time
+      time
+    when NilClass, ''
+      nil
+    else
+      Time.parse(time.to_s)
     end
+  }
+  property :last_accessed_at, transform_with: ->(time) {
+    case time
+    when Time
+      time
+    when NilClass, ''
+      nil
+    else
+      Time.parse(time.to_s)
+    end
+  }
+  property :screenshot_path, transform_with: ->(path) do
+    path = path.to_s
+    path.empty? ? nil : path
+  end
+
+  def screenshot
+    @screenshot || false
   end
 
   def load_screenshot
-    self.screenshot = Screenshot.new(self).read || false
+    @screenshot ||= Screenshot.new(self).read
   end
 
   def to_json
@@ -168,11 +172,10 @@ class Session < Hashie::Trash
       'port' => webport,
       'password' => password,
       'state' => state,
-      'created_at' => created_at.rfc3339,
+      'created_at' => created_at&.rfc3339,
       'last_accessed_at' => last_accessed_at&.rfc3339
     }.tap do |h|
-      h['screenshot'] = Base64.encode64 screenshot if screenshot
-      h['screenshot'] = nil if screenshot == false
+      h['screenshot'] = screenshot ? Base64.encode64(screenshot) : nil
     end
   end
 
@@ -246,7 +249,7 @@ class Desktop < Hashie::Trash
       cmd = SystemCommand.start_session(name, user: user)
     end
     raise InternalServerError unless cmd.success?
-    Session.build_from_output(cmd.stdout.split("\n").last(7), user: user)
+    Session.build_from_output(cmd.stdout.split("\n"), user: user)
   end
 
   def verify_desktop(user:)
@@ -268,13 +271,6 @@ class Desktop < Hashie::Trash
 end
 
 Screenshot = Struct.new(:session) do
-  # Stored as a class method so it can be stubbed in the tests
-  def self.path(username, id)
-    cmd = SystemCommand.echo_cache_dir(user: username)
-    cmd.raise_unless_successful
-    File.join(cmd.stdout.chomp, 'flight/desktop/sessions', id, 'session.png')
-  end
-
   def base64_encode
     Base64.encode64(read)
   end
@@ -284,8 +280,9 @@ Screenshot = Struct.new(:session) do
   end
 
   def read
-    p = self.class.path(session.user, session.id)
-    File.exists?(p) ? File.read(p) : nil
+    path = session.screenshot_path
+    return nil unless path
+    File.exists?(path) ? File.read(path) : nil
   end
 end
 

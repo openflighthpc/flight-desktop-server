@@ -92,7 +92,13 @@ RSpec.configure do |c|
   end
 
   def standard_get_headers
-    header 'Authorization', "Basic #{Base64.encode64("#{username}:#{password}")}"
+    $stdout = StringIO.new
+    FlightAuth::CLI.new(FlightDesktopRestAPI.config.shared_secret_path, 'desktop-restapi-test')
+                   .run
+    $stdout.rewind
+    header 'Authorization', "Bearer #{$stdout.read.chomp}"
+  ensure
+    $stdout = STDOUT
   end
 
   def standard_post_headers
@@ -100,13 +106,15 @@ RSpec.configure do |c|
     header 'Content-Type', 'application/json'
   end
 
-  c.around { |e| FakeFS.with { e.call } }
+  # Enable FakeFS
+  c.around do |example|
+    FakeFS.with do
+      FakeFS::FileSystem.clone FlightDesktopRestAPI.config.shared_secret_path
+      example.call
+    end
+  end
 
   c.before do
-    # Disable RPAM from running in the spec. This way users don't need configuring
-    # It will always return authenticated unless otherwise stubbed
-    allow(PamAuth).to receive(:valid?).and_return(true)
-
     # Disable the SystemCommand::Builder from creating commands
     # This forces all system commands to be mocked
     allow(SystemCommand::Builder).to receive(:new).and_wrap_original do |_, *a|
@@ -114,12 +122,6 @@ RSpec.configure do |c|
         Running system commands is not supported in the spec. The following
         needs to be stubbed: '#{a.first}'
       ERROR
-    end
-
-    # Always allow the SystemCommands for the cache directory as they will
-    # likely always succeed [unless something terrible happens]
-    allow(SystemCommand).to receive(:echo_cache_dir).and_wrap_original do
-      SystemCommand.new(stderr: '', code: 0, stdout: "#{cache_dir}\n")
     end
   end
 end

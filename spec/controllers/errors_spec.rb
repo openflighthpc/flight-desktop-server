@@ -84,7 +84,7 @@ RSpec.describe 'Error Handling' do
 
   context 'with invalid credentials' do
     before do
-      allow(PamAuth).to receive(:valid?).and_return(false)
+      # allow(PamAuth).to receive(:valid?).and_return(false)
       standard_get_headers
     end
 
@@ -109,7 +109,7 @@ RSpec.describe 'Error Handling' do
 
     before do
       standard_get_headers
-      allow(PamAuth).to receive(:valid?).and_return(true)
+      # allow(PamAuth).to receive(:valid?).and_return(true)
       get '/test-error-handling'
     end
 
