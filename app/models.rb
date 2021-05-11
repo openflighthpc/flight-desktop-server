@@ -101,7 +101,7 @@ class Session < Hashie::Trash
         :desktop
       when 'State'
         :state
-      when 'Web Socket Port'
+      when 'WebSocket Port'
         :webport
       when 'Created At'
         :created_at
