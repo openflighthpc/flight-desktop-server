@@ -40,7 +40,12 @@ module FlightDesktopRestAPI
     attribute 'shared_secret_path', default: 'etc/shared-secret.conf',
                                     transform: relative_to(root_path)
     attribute 'sso_cookie_name',    default: 'flight_login'
-    attribute 'desktop_command',    default: 'flight desktop'
+    attribute 'desktop_command',    default: ->() do
+      # TODO: Update to 'Flight.root' once migrated to the new version of
+      # flight_configuration
+      root = ENV.fetch('flight_ROOT', '/opt/flight')
+      "#{File.join(root, 'bin/flight')} desktop"
+    end
 
     def auth_decoder
       @auth_decoder ||= FlightAuth::Builder.new(shared_secret_path)
