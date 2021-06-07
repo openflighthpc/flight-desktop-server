@@ -37,7 +37,6 @@ gem 'flight_auth', github: "openflighthpc/flight_auth", branch: "297cb7241b820d3
 gem 'flight_configuration', github: 'openflighthpc/flight_configuration', branch: '24928260e542768f13cc513a3a08af69f690dfbc'
 gem 'hashie'
 gem 'puma'
-gem 'rpam-ruby19', require: 'rpam'
 gem 'sinatra', require: 'sinatra/base'
 gem 'sinatra-namespace'
 gem 'sinatra-cross_origin'
