@@ -53,7 +53,6 @@ FlightDesktopRestAPI.config.auth_decoder
 require_relative '../app/system_command'
 require_relative '../app/errors'
 require_relative '../app/models'
-require_relative 'initializers/version_check'
 require_relative 'initializers/desktop_types'
 require_relative '../app'
 
