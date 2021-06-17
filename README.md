@@ -86,6 +86,10 @@ installed and the environment activated with the `flight start` command.
 
 Making changes to the default configuration is optional and can be achieved by editing the [flight-desktop-restapi.yaml](etc/flight-desktop-restapi.yaml) file.
 
+This version has been tested with:
+
+`flight-desktop` version `1.5.0`
+
 ## Operation
 
 ### When installed with Flight Runway
