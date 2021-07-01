@@ -51,10 +51,13 @@ class SystemCommand < Hashie::Dash
         read_out.close
         read_err.close
 
-        # Sets up the process with the user
+        # Set process permissions and make the process a session leader.
+        # Calls to both `Process.groups=` and `Process.setgid` are needed to
+        # fully remove the parent process's group.
         user_data = Etc.getpwnam(user)
-        Process::Sys.setgid(user_data.gid)
-        Process::Sys.setuid(user)
+        Process.groups = [user_data.gid]
+        Process.gid = user_data.gid
+        Process.uid = user_data.uid
         Process.setsid
 
         # Sets up the environment for the user
@@ -143,4 +146,3 @@ class SystemCommand < Hashie::Dash
     raise InternalServerError
   end
 end
-
