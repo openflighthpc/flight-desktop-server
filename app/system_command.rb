@@ -51,12 +51,12 @@ class SystemCommand < Hashie::Dash
         read_out.close
         read_err.close
 
-        # Set process permissions and make the process a session leader.
-        # Calls to both `Process.groups=` and `Process.setgid` are needed to
-        # fully remove the parent process's group.
         user_data = Etc.getpwnam(user)
-        Process.groups = [user_data.gid]
+        # Jump through hoops to 1) drop the parent process's group permissions
+        # and 2) add all groups for user.
+        Process.groups = []
         Process.gid = user_data.gid
+        Process.initgroups(user, user_data.gid)
         Process.uid = user_data.uid
         Process.setsid
 
