@@ -105,8 +105,9 @@ class SystemCommand < Hashie::Dash
     Builder.new("#{FlightDesktopRestAPI.config.desktop_command} show").call(id, user: user)
   end
 
-  def self.start_session(desktop, user:)
-    Builder.new("#{FlightDesktopRestAPI.config.desktop_command} start").call(desktop, user: user)
+  def self.start_session(desktop = nil, user:)
+    params = [desktop].reject(&:nil?)
+    Builder.new("#{FlightDesktopRestAPI.config.desktop_command} start").call(*params, user: user)
   end
 
   def self.webify_session(id, user:)
@@ -132,8 +133,8 @@ class SystemCommand < Hashie::Dash
   def self.set(desktop: nil, geometry: nil, user:)
     params = {
       desktop: desktop, geometry: geometry
-    }.reject { |_, v| v.nil? }.map { |k, v| "#{k}=#{v}" }.join(" ")
-    Builder.new("#{FlightDesktopRestAPI.config.desktop_command} set #{params}").call(user: user)
+    }.reject { |_, v| v.nil? }.map { |k, v| "#{k}=#{v}" }
+    Builder.new("#{FlightDesktopRestAPI.config.desktop_command} set").call(*params, user: user)
   end
 
   def self.version(user:)

@@ -177,7 +177,11 @@ namespace '/sessions' do
 
   post do
     status 201
-    current_desktop.start_session!(user: current_user).to_json
+    if params[:desktop]
+      current_desktop.start_session!(user: current_user).to_json
+    else
+      Session.start_default(user: current_user).to_json
+    end
   end
 
   namespace('/:id') do
