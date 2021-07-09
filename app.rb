@@ -122,7 +122,15 @@ end
 
 namespace '/configs' do
   get('/user') do
-    DesktopConfig.find(user: current_user).to_json
+    # There is no fetch command for configs in flight-desktop, only set
+    DesktopConfig.update(user: current_user).to_json
+  end
+
+  patch('/user') do
+    update = params.slice('geometry', 'desktop')
+                   .map { |k, v| [k.to_sym, v] }
+                   .to_h
+    DesktopConfig.update(**update, user: current_user).to_json
   end
 end
 

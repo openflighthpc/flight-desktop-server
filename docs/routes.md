@@ -80,6 +80,28 @@ HTTP/2 200 OK
 }
 ```
 
+### PATCH Update
+
+Update the configuration.
+
+``
+PATCH /configs/user
+Authorization: Bearer <token>
+Content-Type: application/json
+Accepts: application/json
+{
+  "desktop": [new-desktop-type],
+  "geometry": [new-geometry]
+}
+
+HTTP/2 200 OK
+{
+  "id": "user",
+  "desktop": <desktop-type>,
+  "geometry": <geometry>
+}
+```
+
 ## Sessions
 
 ### ID

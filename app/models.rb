@@ -33,8 +33,8 @@ require 'time'
 class DesktopConfig < Hashie::Trash
   include Hashie::Extensions::Dash::Coercion
 
-  def self.find(user:)
-    cmd = SystemCommand.set(user: user)
+  def self.update(user:, **opts)
+    cmd = SystemCommand.set(user: user, **opts)
     if cmd.success?
       parts = cmd.stdout.split("\n").map { |s| s.split("\s").last }
       new(desktop: parts.first, geometry: parts[1])
