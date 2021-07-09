@@ -129,6 +129,10 @@ class SystemCommand < Hashie::Dash
     Builder.new("#{FlightDesktopRestAPI.config.desktop_command} avail").call(user: user)
   end
 
+  def self.set(user:)
+    Builder.new("#{FlightDesktopRestAPI.config.desktop_command} set").call(user: user)
+  end
+
   def self.version(user:)
     Builder.new("#{FlightDesktopRestAPI.config.desktop_command} --version").call(user: user)
   end

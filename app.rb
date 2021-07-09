@@ -120,6 +120,12 @@ namespace '/ping' do
   end
 end
 
+namespace '/configs' do
+  get('/user') do
+    DesktopConfig.find(user: current_user).to_json
+  end
+end
+
 namespace '/desktops' do
   get do
     { 'data' => Desktop.index }.to_json

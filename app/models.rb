@@ -30,6 +30,35 @@
 require 'base64'
 require 'time'
 
+class DesktopConfig < Hashie::Trash
+  include Hashie::Extensions::Dash::Coercion
+
+  def self.find(user:)
+    cmd = SystemCommand.set(user: user)
+    if cmd.success?
+      parts = cmd.stdout.split("\n").map { |s| s.split("\s").last }
+      new(desktop: parts.first, geometry: parts[1])
+    else
+      raise InternalServerError
+    end
+  end
+
+  property :desktop
+  property :geometry
+
+  def as_json(_ = {})
+    {
+      'id' => 'user',
+      'desktop' => desktop,
+      'geometry' => geometry
+    }
+  end
+
+  def to_json
+    as_json.to_json
+  end
+end
+
 class Session < Hashie::Trash
   include Hashie::Extensions::Dash::Coercion
 
