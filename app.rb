@@ -120,6 +120,20 @@ namespace '/ping' do
   end
 end
 
+namespace '/configs' do
+  get('/user') do
+    # There is no fetch command for configs in flight-desktop, only set
+    DesktopConfig.update(user: current_user).to_json
+  end
+
+  patch('/user') do
+    update = params.slice('geometry', 'desktop')
+                   .map { |k, v| [k.to_sym, v] }
+                   .to_h
+    DesktopConfig.update(**update, user: current_user).to_json
+  end
+end
+
 namespace '/desktops' do
   get do
     { 'data' => Desktop.index }.to_json
@@ -163,7 +177,11 @@ namespace '/sessions' do
 
   post do
     status 201
-    current_desktop.start_session!(user: current_user).to_json
+    if params[:desktop]
+      current_desktop.start_session!(user: current_user).to_json
+    else
+      Session.start_default(user: current_user).to_json
+    end
   end
 
   namespace('/:id') do

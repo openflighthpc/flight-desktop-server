@@ -61,6 +61,47 @@ Content-Type: application/json
 }
 ```
 
+## Configs
+
+### GET Show
+
+Returns the default configuration for the user.
+
+```
+GET /configs/user
+Authorization: Bearer <token>
+Accepts: application/json
+
+HTTP/2 200 OK
+{
+  "id": "user",
+  "desktop": <desktop-type>,
+  "geometry": <geometry>
+}
+```
+
+### PATCH Update
+
+Update the configuration.
+
+``
+PATCH /configs/user
+Authorization: Bearer <token>
+Content-Type: application/json
+Accepts: application/json
+{
+  "desktop": [new-desktop-type],
+  "geometry": [new-geometry]
+}
+
+HTTP/2 200 OK
+{
+  "id": "user",
+  "desktop": <desktop-type>,
+  "geometry": <geometry>
+}
+```
+
 ## Sessions
 
 ### ID

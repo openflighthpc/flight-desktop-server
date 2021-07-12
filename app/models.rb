@@ -30,6 +30,35 @@
 require 'base64'
 require 'time'
 
+class DesktopConfig < Hashie::Trash
+  include Hashie::Extensions::Dash::Coercion
+
+  def self.update(user:, **opts)
+    cmd = SystemCommand.set(user: user, **opts)
+    if cmd.success?
+      parts = cmd.stdout.split("\n").map { |s| s.split("\s").last }
+      new(desktop: parts.first, geometry: parts[1])
+    else
+      raise InternalServerError
+    end
+  end
+
+  property :desktop
+  property :geometry
+
+  def as_json(_ = {})
+    {
+      'id' => 'user',
+      'desktop' => desktop,
+      'geometry' => geometry
+    }
+  end
+
+  def to_json
+    as_json.to_json
+  end
+end
+
 class Session < Hashie::Trash
   include Hashie::Extensions::Dash::Coercion
 
@@ -78,6 +107,15 @@ class Session < Hashie::Trash
       #
       # It is assumed that the primary reason for the error is because the session is missing
       nil
+    end
+  end
+
+  def self.start_default(user:)
+    cmd = SystemCommand.start_session(user: user)
+    if cmd.success?
+      build_from_output(cmd.stdout.split("\n"), user: user)
+    else
+      raise InternalServerError
     end
   end
 
